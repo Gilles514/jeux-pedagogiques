@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les mois de l'année</title>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bleu: #1976d2;
+    --bleu-fonce: #0d47a1;
+    --bleu-clair: #2196f3;
+    --vert-ok: #2e7d32;
+    --orange-err: #e65100;
+    --fond: #e8f5e9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e8f5e9 0%, #dcedc8 50%, #f1f8e9 100%);
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 12px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .titre {
+    font-size: clamp(18px, 4vw, 28px);
+    font-weight: 700;
+    color: #1a237e;
+    margin-bottom: 8px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .btn-audio {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid #f9a825;
+    background: linear-gradient(145deg, #fff9c4, #fff176);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(249,168,37,0.3);
+    transition: transform 0.15s ease;
+    margin-bottom: 12px;
+  }
+  .btn-audio:hover { transform: scale(1.1); }
+  .btn-audio:active { transform: scale(0.95); }
+  .btn-audio.playing {
+    animation: pulse-audio 0.6s ease infinite alternate;
+    border-color: #f57f17;
+  }
+
+  @keyframes pulse-audio {
+    0% { box-shadow: 0 0 0 0 rgba(249,168,37,0.5); }
+    100% { box-shadow: 0 0 0 10px rgba(249,168,37,0); }
+  }
+
+  .grille-slots {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 8px;
+  }
+
+  .slot-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .slot {
+    width: clamp(52px, 14vw, 100px);
+    height: clamp(52px, 14vw, 100px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 2.2vw, 16px);
+    font-weight: 700;
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+    transition: all 0.2s ease;
+  }
+
+  .slot.vide {
+    color: #999;
+    background: radial-gradient(circle at 40% 35%, #ffffff, #e8e8e8);
+    border: 3px solid #bdbdbd;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), inset 0 -2px 4px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .slot.occupe {
+    color: white;
+    background: linear-gradient(145deg, #1565c0, #1976d2, #2196f3);
+    border: 3px solid #0d47a1;
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.25), 0 3px 8px rgba(25,118,210,0.3);
+    cursor: grab;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  .slot.drag-over {
+    border-color: #f9a825;
+    box-shadow: 0 0 0 4px rgba(249,168,37,0.3);
+  }
+
+  .smiley {
+    margin-top: 4px;
+    animation: popIn 0.3s ease;
+  }
+
+  .pool {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    min-height: 80px;
+    width: 100%;
+    max-width: 720px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 16px;
+    border: 2px dashed #a5d6a7;
+    margin-bottom: 20px;
+  }
+
+  .pool-vide {
+    color: #999;
+    font-size: 14px;
+    font-style: italic;
+    align-self: center;
+  }
+
+  .mois-bulle {
+    width: clamp(56px, 15vw, 105px);
+    height: clamp(56px, 15vw, 105px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 2.2vw, 16px);
+    font-weight: 700;
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+    color: white;
+    background: linear-gradient(145deg, #1565c0, #1976d2, #2196f3);
+    border: 3px solid #0d47a1;
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.25), 0 4px 10px rgba(25,118,210,0.35);
+    cursor: grab;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease;
+  }
+  .mois-bulle:hover { transform: scale(1.08); }
+
+  .message {
+    font-size: clamp(20px, 5vw, 42px);
+    font-weight: 700;
+    margin: 10px 0;
+    text-align: center;
+    animation: bounceIn 0.5s ease;
+  }
+
+  .message-erreur { color: #d32f2f; }
+
+  .bravo-lettre {
+    display: inline-block;
+    animation: letterBounce 0.6s ease both;
+  }
+
+  .boutons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 10px 28px;
+    font-size: clamp(14px, 3vw, 18px);
+    font-weight: 700;
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+    color: #fff;
+    background: linear-gradient(180deg, #43a047, #2e7d32);
+    border: 2px solid #1b5e20;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    transition: transform 0.1s;
+  }
+  .btn:hover { transform: scale(1.05); }
+  .btn:active { transform: scale(0.97); }
+
+  .fantome-tactile {
+    position: fixed;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1565c0, #2196f3);
+    border: 3px solid #0d47a1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.9;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    display: none;
+  }
+
+  .pied {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes letterBounce {
+    0% { transform: translateY(20px); opacity: 0; }
+    60% { transform: translateY(-5px); }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="titre">🎵 Il faut mettre les mois de l'année dans l'ordre.</div>
+
+<!-- Bouton audio -->
+<button class="btn-audio" id="btnAudio" onclick="jouerAudio()" title="Écouter la consigne">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f57f17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+  </svg>
+</button>
+
+<!-- Grille des slots : rangée 1 -->
+<div class="grille-slots" id="slotsRangee1"></div>
+<!-- Message de résultat (entre les deux rangées quand vérifié) -->
+<div id="messageResultat"></div>
+<!-- Grille des slots : rangée 2 -->
+<div class="grille-slots" id="slotsRangee2"></div>
+
+<!-- Pool des mois mélangés -->
+<div class="pool" id="pool"></div>
+
+<!-- Boutons -->
+<div class="boutons">
+  <button class="btn" onclick="recommencer()">Recommencer</button>
+</div>
+
+<div class="pied">Glisse chaque mois dans la bonne position !</div>
+
+<!-- Fantôme tactile -->
+<div class="fantome-tactile" id="fantome"></div>
+
+<!--
+  ==========================================================
+  AUDIO : Remplacez le nom du fichier ci-dessous par votre MP3.
+  Placez votre fichier dans un dossier "audio/" à côté de ce HTML.
+  Exemple : audio/consigne-mois.mp3
+  ==========================================================
+-->
+<audio id="audioConsigne" preload="auto">
+  <source src="audio/consigne-mois.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ============ DONNÉES ============
+const MOIS = [
+  "janvier","février","mars","avril","mai","juin",
+  "juillet","août","septembre","octobre","novembre","décembre"
+];
+
+let melanges = [];
+let placements = Array(12).fill(null);
+let resultats = null;
+let verified = false;
+
+// Drag state
+let dragMois = null;
+let dragSource = null; // "pool" ou index numérique
+let touchInfo = null;
+
+// ============ UTILITAIRES ============
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function smileyVertSVG() {
+  return `<svg width="28" height="28" viewBox="0 0 28 28">
+    <circle cx="14" cy="14" r="13" fill="#4caf50" stroke="#2e7d32" stroke-width="1.5"/>
+    <circle cx="9" cy="11" r="2" fill="white"/>
+    <circle cx="19" cy="11" r="2" fill="white"/>
+    <path d="M 8 17 Q 14 23 20 17" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function smileyOrangeSVG() {
+  return `<svg width="28" height="28" viewBox="0 0 28 28">
+    <circle cx="14" cy="14" r="13" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/>
+    <circle cx="9" cy="11" r="2" fill="white"/>
+    <circle cx="19" cy="11" r="2" fill="white"/>
+    <path d="M 8 21 Q 14 15 20 21" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ============ AUDIO ============
+const audioEl = document.getElementById("audioConsigne");
+const btnAudio = document.getElementById("btnAudio");
+let useSynthese = false;
+
+// Si le fichier MP3 n'est pas disponible, on utilise la synthèse vocale
+audioEl.addEventListener("error", function() {
+  useSynthese = true;
+});
+
+function jouerAudio() {
+  btnAudio.classList.add("playing");
+
+  if (useSynthese || !audioEl.src || audioEl.error) {
+    // Synthèse vocale en secours
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(
+        "Il faut mettre les mois de l'année dans l'ordre. Glisse chaque mois dans la bonne position!"
+      );
+      u.lang = "fr-FR";
+      u.rate = 0.85;
+      u.onend = () => btnAudio.classList.remove("playing");
+      u.onerror = () => btnAudio.classList.remove("playing");
+      window.speechSynthesis.speak(u);
+    } else {
+      btnAudio.classList.remove("playing");
+    }
+  } else {
+    audioEl.currentTime = 0;
+    audioEl.play().catch(() => {
+      // Si la lecture échoue, on bascule en synthèse
+      useSynthese = true;
+      jouerAudio();
+    });
+    audioEl.onended = () => btnAudio.classList.remove("playing");
+  }
+}
+
+// ============ RENDU ============
+function render() {
+  const moisDansPool = melanges.filter(m => !placements.includes(m));
+
+  // Rangée 1 (slots 0-5)
+  renderSlots("slotsRangee1", 0, 6);
+  // Rangée 2 (slots 6-11)
+  renderSlots("slotsRangee2", 6, 12);
+
+  // Pool
+  const poolEl = document.getElementById("pool");
+  poolEl.innerHTML = "";
+
+  if (moisDansPool.length === 0 && !verified) {
+    poolEl.innerHTML = '<span class="pool-vide">Tous les mois sont placés !</span>';
+  } else {
+    moisDansPool.forEach(mois => {
+      const el = document.createElement("div");
+      el.className = "mois-bulle";
+      el.textContent = mois;
+      el.draggable = true;
+      el.addEventListener("dragstart", () => { dragMois = mois; dragSource = "pool"; });
+      el.addEventListener("touchstart", (e) => debutTactile(e, mois, "pool"), { passive: false });
+      poolEl.appendChild(el);
+    });
+  }
+
+  // Message
+  const msgEl = document.getElementById("messageResultat");
+  msgEl.innerHTML = "";
+
+  if (verified && resultats) {
+    const toutCorrect = resultats.every(r => r);
+    if (toutCorrect) {
+      const couleurs = ["#1976d2","#d32f2f","#7b1fa2","#388e3c","#f57c00","#1976d2","#d32f2f","#388e3c"];
+      const lettres = "BRAVO!!!".split("").map((c, i) =>
+        `<span class="bravo-lettre" style="color:${couleurs[i]};animation-delay:${i*0.08}s">${c}</span>`
+      ).join("");
+      msgEl.innerHTML = `<div class="message">🎉 ${lettres} 🎉</div>`;
+    } else {
+      msgEl.innerHTML = `<div class="message message-erreur">Il y a des erreurs, corrige tes fautes.</div>`;
+    }
+  }
+}
+
+function renderSlots(containerId, start, end) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  for (let i = start; i < end; i++) {
+    const col = document.createElement("div");
+    col.className = "slot-col";
+
+    const slot = document.createElement("div");
+    const mois = placements[i];
+    slot.className = "slot " + (mois ? "occupe" : "vide");
+    slot.textContent = mois || `mois ${i + 1}`;
+    slot.dataset.slotIndex = i;
+
+    // Drag & drop events pour le slot
+    slot.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      slot.classList.add("drag-over");
+    });
+    slot.addEventListener("dragleave", () => slot.classList.remove("drag-over"));
+    slot.addEventListener("drop", (e) => {
+      e.preventDefault();
+      slot.classList.remove("drag-over");
+      deposerDansSlot(i);
+    });
+
+    if (mois) {
+      slot.draggable = true;
+      slot.addEventListener("dragstart", () => { dragMois = mois; dragSource = i; });
+      slot.addEventListener("touchstart", (e) => debutTactile(e, mois, i), { passive: false });
+    }
+
+    col.appendChild(slot);
+
+    // Smiley
+    if (verified && resultats && mois) {
+      const smiley = document.createElement("div");
+      smiley.className = "smiley";
+      smiley.innerHTML = resultats[i] ? smileyVertSVG() : smileyOrangeSVG();
+      col.appendChild(smiley);
+    }
+
+    container.appendChild(col);
+  }
+}
+
+// ============ LOGIQUE DE JEU ============
+function deposerDansSlot(idx) {
+  if (!dragMois) return;
+  const prev = placements[idx];
+
+  if (typeof dragSource === "number") {
+    placements[dragSource] = prev;
+  }
+  placements[idx] = dragMois;
+
+  dragMois = null;
+  dragSource = null;
+  verified = false;
+  resultats = null;
+  render();
+  verifierSiComplet();
+}
+
+function deposerDansPool() {
+  if (!dragMois || dragSource === "pool") return;
+  if (typeof dragSource === "number") {
+    placements[dragSource] = null;
+  }
+  dragMois = null;
+  dragSource = null;
+  verified = false;
+  resultats = null;
+  render();
+}
+
+function verifierSiComplet() {
+  if (placements.every(m => m !== null)) {
+    setTimeout(verifier, 400);
+  }
+}
+
+function verifier() {
+  resultats = placements.map((m, i) => m === MOIS[i]);
+  verified = true;
+  render();
+}
+
+function recommencer() {
+  melanges = shuffle(MOIS);
+  placements = Array(12).fill(null);
+  resultats = null;
+  verified = false;
+  render();
+}
+
+// ============ GESTION TACTILE ============
+const fantome = document.getElementById("fantome");
+
+function debutTactile(e, mois, source) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  dragMois = mois;
+  dragSource = source;
+  touchInfo = { x: touch.clientX, y: touch.clientY };
+
+  fantome.textContent = mois;
+  fantome.style.display = "flex";
+  fantome.style.left = (touch.clientX - 40) + "px";
+  fantome.style.top = (touch.clientY - 40) + "px";
+}
+
+document.addEventListener("touchmove", (e) => {
+  if (!touchInfo) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  touchInfo.x = touch.clientX;
+  touchInfo.y = touch.clientY;
+  fantome.style.left = (touch.clientX - 40) + "px";
+  fantome.style.top = (touch.clientY - 40) + "px";
+
+  // Highlight du slot survolé
+  document.querySelectorAll(".slot").forEach(s => s.classList.remove("drag-over"));
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (el) {
+    const slotEl = el.closest("[data-slot-index]");
+    if (slotEl) slotEl.classList.add("drag-over");
+  }
+}, { passive: false });
+
+document.addEventListener("touchend", (e) => {
+  if (!touchInfo || !dragMois) {
+    touchInfo = null;
+    fantome.style.display = "none";
+    return;
+  }
+  e.preventDefault();
+
+  document.querySelectorAll(".slot").forEach(s => s.classList.remove("drag-over"));
+
+  const el = document.elementFromPoint(touchInfo.x, touchInfo.y);
+  if (el) {
+    const slotEl = el.closest("[data-slot-index]");
+    const poolEl = el.closest(".pool");
+    if (slotEl) {
+      deposerDansSlot(parseInt(slotEl.dataset.slotIndex));
+    } else if (poolEl) {
+      deposerDansPool();
+    }
+  }
+
+  touchInfo = null;
+  dragMois = null;
+  dragSource = null;
+  fantome.style.display = "none";
+}, { passive: false });
+
+// Drop sur le pool (souris)
+document.getElementById("pool").addEventListener("dragover", (e) => e.preventDefault());
+document.getElementById("pool").addEventListener("drop", (e) => {
+  e.preventDefault();
+  deposerDansPool();
+});
+
+// ============ INIT ============
+recommencer();
+</script>
+</body>
+</html>
