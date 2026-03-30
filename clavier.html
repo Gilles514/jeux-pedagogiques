@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Les lettres du clavier — eleves.ca</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
+
+/* ── Variables (alignées sur charte.css) ── */
+:root {
+–font-jeu: ‘Nunito’, ‘Varela Round’, sans-serif;
+–couleur-fond: #F9F6F0;
+–francais-principale: #1976d2;
+–francais-fonce: #0d47a1;
+–francais-clair: #bbdefb;
+–francais-fond: #e3f2fd;
+–couleur-succes: #43a047;
+–couleur-succes-fond: #e8f5e9;
+–couleur-succes-texte: #1b5e20;
+–couleur-erreur: #e53935;
+–couleur-erreur-fond: #ffebee;
+–couleur-audio: #f9a825;
+–couleur-audio-fond: #fff9c4;
+–couleur-audio-bord: #f57f17;
+–couleur-neutre: #757575;
+–couleur-neutre-bord: #bdbdbd;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+min-height: 100vh;
+background: var(–couleur-fond);
+font-family: var(–font-jeu);
+color: #1a237e;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 16px 12px;
+-webkit-font-smoothing: antialiased;
+user-select: none;
+-webkit-user-select: none;
+overflow-x: hidden;
+}
+
+/* ── Titre ── */
+h1 {
+font-size: clamp(18px, 4vw, 28px);
+font-weight: 800;
+text-align: center;
+margin-bottom: 4px;
+line-height: 1.3;
+}
+.sous-titre {
+font-size: 12px;
+color: #888;
+margin-bottom: 12px;
+}
+
+/* ── Barre de progression ── */
+.progression {
+display: flex;
+gap: 8px;
+margin-bottom: 16px;
+flex-wrap: wrap;
+justify-content: center;
+}
+.progression .point {
+width: 28px;
+height: 28px;
+border-radius: 50%;
+background: #e0e0e0;
+border: 2px solid var(–couleur-neutre-bord);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 13px;
+font-weight: 700;
+color: transparent;
+transition: all 0.4s ease;
+}
+.progression .point.reussi {
+background: var(–couleur-succes);
+border-color: var(–couleur-succes-texte);
+color: white;
+}
+.progression .point.actif {
+background: var(–francais-clair);
+border-color: var(–francais-principale);
+color: var(–francais-principale);
+animation: pulsePoint 1.2s ease infinite;
+}
+
+/* ── Zone cible ── */
+.zone-cible {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 6px;
+margin-bottom: 14px;
+min-height: 110px;
+justify-content: center;
+}
+.lettre-cible {
+font-size: clamp(52px, 14vw, 90px);
+font-weight: 800;
+color: var(–francais-fonce);
+line-height: 1;
+letter-spacing: 8px;
+animation: apparitionLettre 0.4s ease;
+}
+.lettre-cible .minuscule {
+color: var(–francais-principale);
+}
+.consigne-audio {
+font-size: clamp(13px, 2.5vw, 16px);
+color: #555;
+text-align: center;
+}
+
+/* ── Bouton audio ── */
+.btn-ecouter {
+width: 48px;
+height: 48px;
+border-radius: 50%;
+background: linear-gradient(145deg, var(–couleur-audio-fond), #fff176);
+border: 3px solid var(–couleur-audio);
+box-shadow: 0 3px 8px rgba(249, 168, 37, 0.35);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 22px;
+transition: transform 0.15s;
+flex-shrink: 0;
+}
+.btn-ecouter:hover { transform: scale(1.08); }
+.btn-ecouter:active { transform: scale(0.95); }
+.btn-ecouter.en-lecture {
+animation: pulseAudio 0.6s ease infinite alternate;
+}
+
+/* ── Sélecteur de mode ── */
+.mode-selector {
+display: flex;
+gap: 8px;
+margin-bottom: 16px;
+flex-wrap: wrap;
+justify-content: center;
+}
+.mode-btn {
+padding: 8px 18px;
+font-size: clamp(12px, 2.5vw, 15px);
+font-weight: 700;
+font-family: var(–font-jeu);
+border-radius: 20px;
+border: 2px solid var(–couleur-neutre-bord);
+background: white;
+color: #555;
+cursor: pointer;
+transition: all 0.2s;
+}
+.mode-btn:hover { border-color: var(–francais-principale); color: var(–francais-principale); }
+.mode-btn.actif {
+background: var(–francais-principale);
+color: white;
+border-color: var(–francais-fonce);
+}
+
+/* ── Clavier visuel ── */
+.clavier {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: clamp(4px, 1vw, 8px);
+margin-bottom: 16px;
+width: 100%;
+max-width: 680px;
+}
+.rangee {
+display: flex;
+gap: clamp(3px, 0.8vw, 6px);
+justify-content: center;
+}
+.touche {
+width: clamp(32px, 8vw, 58px);
+height: clamp(36px, 9vw, 58px);
+border-radius: 8px;
+background: linear-gradient(180deg, #fffde7, #f5f0d0);
+border: 2px solid #d4c98a;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: clamp(14px, 3.5vw, 24px);
+font-weight: 800;
+font-family: var(–font-jeu);
+color: #333;
+cursor: pointer;
+transition: all 0.15s ease;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+position: relative;
+}
+.touche:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.touche:active {
+transform: translateY(1px);
+box-shadow: none;
+}
+
+/* ── États des touches ── */
+.touche.correcte {
+background: linear-gradient(180deg, #a5d6a7, var(–couleur-succes)) !important;
+border-color: var(–couleur-succes-texte) !important;
+color: white !important;
+animation: toucheCorrect 0.4s ease;
+}
+.touche.incorrecte {
+animation: toucheIncorrect 0.4s ease;
+background: linear-gradient(180deg, #ffcdd2, #ef9a9a) !important;
+border-color: var(–couleur-erreur) !important;
+}
+.touche.indice {
+animation: pulseIndice 0.8s ease infinite;
+border-color: var(–francais-principale) !important;
+box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3) !important;
+}
+.touche.trouvee {
+background: linear-gradient(180deg, #c8e6c9, #a5d6a7);
+border-color: #81c784;
+color: var(–couleur-succes-texte);
+opacity: 0.7;
+}
+
+/* ── Écran de fin ── */
+.ecran-fin {
+display: none;
+flex-direction: column;
+align-items: center;
+gap: 16px;
+text-align: center;
+animation: apparitionLettre 0.5s ease;
+}
+.ecran-fin.visible { display: flex; }
+.ecran-fin .bravo {
+font-size: clamp(36px, 10vw, 64px);
+font-weight: 800;
+color: var(–couleur-succes-texte);
+}
+.bravo-lettre {
+display: inline-block;
+animation: lettreRebond 0.6s ease both;
+}
+.ecran-fin .score {
+font-size: clamp(16px, 4vw, 22px);
+color: #555;
+}
+.ecran-fin .score strong {
+color: var(–francais-fonce);
+font-size: 1.2em;
+}
+.etoiles {
+font-size: clamp(28px, 8vw, 48px);
+letter-spacing: 4px;
+}
+
+/* ── Boutons d’action ── */
+.boutons-action {
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
+justify-content: center;
+margin-top: 8px;
+}
+.btn {
+padding: 10px 24px;
+font-size: clamp(13px, 3vw, 16px);
+font-weight: 700;
+font-family: var(–font-jeu);
+border-radius: 12px;
+border: none;
+cursor: pointer;
+box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+transition: transform 0.1s, box-shadow 0.1s;
+display: inline-flex;
+align-items: center;
+gap: 8px;
+}
+.btn:hover { transform: scale(1.05); }
+.btn:active { transform: scale(0.97); box-shadow: none; }
+.btn-principal {
+background: linear-gradient(180deg, #42a5f5, var(–francais-principale));
+color: white;
+border: 2px solid var(–francais-fonce);
+}
+.btn-secondaire {
+background: transparent;
+color: var(–couleur-neutre);
+border: 1.5px solid var(–couleur-neutre-bord);
+box-shadow: none;
+font-size: clamp(12px, 2.5vw, 14px);
+}
+.btn-secondaire:hover { background: rgba(0,0,0,0.04); }
+
+/* ── Écran d’accueil ── */
+.ecran-accueil {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 16px;
+text-align: center;
+}
+.ecran-accueil.masque { display: none; }
+.icone-clavier {
+font-size: 56px;
+margin-bottom: 4px;
+}
+.description {
+font-size: clamp(14px, 3vw, 17px);
+color: #555;
+max-width: 500px;
+line-height: 1.6;
+}
+
+/* ── Zone de jeu ── */
+.zone-jeu { display: none; flex-direction: column; align-items: center; width: 100%; }
+.zone-jeu.visible { display: flex; }
+
+/* ── Pied ── */
+.pied {
+font-size: 12px;
+color: #aaa;
+margin-top: auto;
+padding-top: 16px;
+}
+
+/* ── Animations ── */
+@keyframes apparitionLettre {
+0% { transform: scale(0.5); opacity: 0; }
+60% { transform: scale(1.08); }
+100% { transform: scale(1); opacity: 1; }
+}
+@keyframes toucheCorrect {
+0% { transform: scale(1); }
+40% { transform: scale(1.2); }
+100% { transform: scale(1); }
+}
+@keyframes toucheIncorrect {
+0%, 100% { transform: translateX(0); }
+20% { transform: translateX(-6px); }
+40% { transform: translateX(6px); }
+60% { transform: translateX(-4px); }
+80% { transform: translateX(4px); }
+}
+@keyframes pulseIndice {
+0%, 100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.5); }
+50% { box-shadow: 0 0 0 8px rgba(25, 118, 210, 0); }
+}
+@keyframes pulsePoint {
+0%, 100% { transform: scale(1); }
+50% { transform: scale(1.15); }
+}
+@keyframes pulseAudio {
+0% { box-shadow: 0 0 0 0 rgba(249, 168, 37, 0.5); }
+100% { box-shadow: 0 0 0 10px rgba(249, 168, 37, 0); }
+}
+@keyframes lettreRebond {
+0% { transform: translateY(20px); opacity: 0; }
+60% { transform: translateY(-5px); }
+100% { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+*, *::before, *::after {
+animation-duration: 0.01ms !important;
+transition-duration: 0.01ms !important;
+}
+}
+
+@media (hover: none) and (pointer: coarse) {
+.touche:hover { transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
+.btn:hover { transform: none; }
+.btn-ecouter:hover { transform: none; }
+.touche { min-height: 44px; min-width: 34px; }
+.btn { min-height: 44px; }
+}
+</style>
+
+</head>
+<body>
+
+  <h1>Les lettres du clavier</h1>
+  <p class="sous-titre">eleves.ca — Apprendre en s'amusant</p>
+
+  <!-- ══════ ÉCRAN D'ACCUEIL ══════ -->
+
+  <div class="ecran-accueil" id="ecranAccueil">
+    <div class="icone-clavier">⌨️</div>
+    <p class="description">
+      Écoute la lettre, puis trouve-la sur le clavier !<br>
+      Tu peux appuyer sur ton clavier ou cliquer sur l'écran.
+    </p>
+
+```
+<div class="mode-selector">
+  <button class="mode-btn actif" data-mode="majuscule" onclick="choisirMode('majuscule')">A B C</button>
+  <button class="mode-btn" data-mode="minuscule" onclick="choisirMode('minuscule')">a b c</button>
+  <button class="mode-btn" data-mode="les-deux" onclick="choisirMode('les-deux')">A a &nbsp; B b</button>
+</div>
+
+<button class="btn btn-principal" onclick="lancerPartie()">▶ Commencer</button>
+```
+
+  </div>
+
+  <!-- ══════ ZONE DE JEU ══════ -->
+
+  <div class="zone-jeu" id="zoneJeu">
+
+```
+<!-- Progression -->
+<div class="progression" id="progression"></div>
+
+<!-- Lettre cible + audio -->
+<div class="zone-cible">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div class="lettre-cible" id="lettreCible"></div>
+    <button class="btn-ecouter" id="btnEcouter" onclick="prononcerLettreCourante()" title="Écouter la lettre">🔊</button>
+  </div>
+  <p class="consigne-audio" id="consigne">Trouve cette lettre sur le clavier !</p>
+</div>
+
+<!-- Clavier visuel QWERTY -->
+<div class="clavier" id="clavier">
+  <div class="rangee" id="rangee1"></div>
+  <div class="rangee" id="rangee2"></div>
+  <div class="rangee" id="rangee3"></div>
+</div>
+
+<!-- Bouton changer mode en cours de jeu -->
+<div class="boutons-action" style="margin-bottom:8px;">
+  <button class="btn-secondaire btn" onclick="retourAccueil()">↩ Menu</button>
+</div>
+```
+
+  </div>
+
+  <!-- ══════ ÉCRAN DE FIN ══════ -->
+
+  <div class="ecran-fin" id="ecranFin">
+    <div class="bravo" id="bravoTexte"></div>
+    <div class="etoiles" id="etoiles"></div>
+    <div class="score" id="scoreTexte"></div>
+    <div class="boutons-action">
+      <button class="btn btn-principal" onclick="lancerPartie()">🔄 Rejouer</button>
+      <button class="btn btn-secondaire" onclick="retourAccueil()">↩ Menu</button>
+    </div>
+  </div>
+
+  <p class="pied">eleves.ca — Les lettres du clavier — Démo</p>
+
+<script>
+  // ══════════════════════════════════════════════
+  // CONFIGURATION
+  // ══════════════════════════════════════════════
+  const LETTRES_PAR_SERIE = 10;
+  const DELAI_SUCCES = 1200;       // ms avant la lettre suivante
+  const ERREURS_AVANT_INDICE = 2;
+  const VITESSE_VOIX = 0.85;
+
+  // Disposition QWERTY canadien-français
+  const RANGEES_CLAVIER = [
+    ['Q','W','E','R','T','Y','U','I','O','P'],
+    ['A','S','D','F','G','H','J','K','L'],
+    ['Z','X','C','V','B','N','M']
+  ];
+
+  // Prononciation française des lettres
+  const PRONONCIATIONS = {
+    'A':'a', 'B':'bé', 'C':'cé', 'D':'dé', 'E':'euh', 'F':'effe',
+    'G':'gé', 'H':'ache', 'I':'i', 'J':'ji', 'K':'ka', 'L':'elle',
+    'M':'emme', 'N':'enne', 'O':'o', 'P':'pé', 'Q':'ku', 'R':'erre',
+    'S':'esse', 'T':'té', 'U':'u', 'V':'vé', 'W':'double vé',
+    'X':'ixe', 'Y':'i grec', 'Z':'zède'
+  };
+
+  // ══════════════════════════════════════════════
+  // ÉTAT DU JEU
+  // ══════════════════════════════════════════════
+  let mode = 'majuscule';        // 'majuscule', 'minuscule', 'les-deux'
+  let lettresSerie = [];          // les 10 lettres de la série
+  let indexCourant = 0;           // position dans la série
+  let erreursCourantes = 0;       // erreurs sur la lettre en cours
+  let premierCoup = [];           // true/false pour chaque lettre (réussie du 1er coup)
+  let enAttente = false;          // bloqué pendant l'animation de succès
+  let toucheElements = {};        // map lettre → élément DOM
+
+  // ══════════════════════════════════════════════
+  // INITIALISATION
+  // ══════════════════════════════════════════════
+  function construireClavier() {
+    const ids = ['rangee1', 'rangee2', 'rangee3'];
+    RANGEES_CLAVIER.forEach((rangee, i) => {
+      const container = document.getElementById(ids[i]);
+      container.innerHTML = '';
+      rangee.forEach(lettre => {
+        const touche = document.createElement('div');
+        touche.className = 'touche';
+        touche.textContent = lettre;
+        touche.dataset.lettre = lettre;
+        touche.addEventListener('click', () => traiterReponse(lettre));
+        // Tactile
+        touche.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          traiterReponse(lettre);
+        });
+        container.appendChild(touche);
+        toucheElements[lettre] = touche;
+      });
+    });
+  }
+
+  function construireProgression() {
+    const container = document.getElementById('progression');
+    container.innerHTML = '';
+    for (let i = 0; i < LETTRES_PAR_SERIE; i++) {
+      const point = document.createElement('div');
+      point.className = 'point';
+      point.id = 'point-' + i;
+      point.textContent = (i + 1);
+      container.appendChild(point);
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // MODES
+  // ══════════════════════════════════════════════
+  function choisirMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.classList.toggle('actif', btn.dataset.mode === m);
+    });
+  }
+
+  // ══════════════════════════════════════════════
+  // LANCER UNE PARTIE
+  // ══════════════════════════════════════════════
+  function lancerPartie() {
+    // Tirer 10 lettres aléatoires distinctes
+    const toutes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    lettresSerie = [];
+    const copie = [...toutes];
+    for (let i = 0; i < LETTRES_PAR_SERIE; i++) {
+      const idx = Math.floor(Math.random() * copie.length);
+      lettresSerie.push(copie.splice(idx, 1)[0]);
+    }
+
+    indexCourant = 0;
+    premierCoup = [];
+    enAttente = false;
+
+    // Réinitialiser les touches
+    Object.values(toucheElements).forEach(el => {
+      el.className = 'touche';
+    });
+
+    // Afficher la zone de jeu
+    document.getElementById('ecranAccueil').classList.add('masque');
+    document.getElementById('ecranFin').classList.remove('visible');
+    document.getElementById('zoneJeu').classList.add('visible');
+
+    construireProgression();
+    afficherLettreCourante();
+  }
+
+  // ══════════════════════════════════════════════
+  // AFFICHER LA LETTRE COURANTE
+  // ══════════════════════════════════════════════
+  function afficherLettreCourante() {
+    const lettre = lettresSerie[indexCourant];
+    erreursCourantes = 0;
+    enAttente = false;
+
+    // Retirer l'indice de toutes les touches
+    Object.values(toucheElements).forEach(el => el.classList.remove('indice'));
+
+    // Afficher la lettre cible selon le mode
+    const cibleEl = document.getElementById('lettreCible');
+    if (mode === 'majuscule') {
+      cibleEl.innerHTML = lettre;
+    } else if (mode === 'minuscule') {
+      cibleEl.innerHTML = `<span class="minuscule">${lettre.toLowerCase()}</span>`;
+    } else {
+      cibleEl.innerHTML = `${lettre} <span class="minuscule">${lettre.toLowerCase()}</span>`;
+    }
+
+    // Forcer la ré-animation
+    cibleEl.style.animation = 'none';
+    cibleEl.offsetHeight;
+    cibleEl.style.animation = '';
+
+    // Mettre à jour la progression
+    for (let i = 0; i < LETTRES_PAR_SERIE; i++) {
+      const pt = document.getElementById('point-' + i);
+      pt.className = 'point';
+      if (i < indexCourant) pt.classList.add('reussi');
+      if (i === indexCourant) pt.classList.add('actif');
+    }
+
+    document.getElementById('consigne').textContent = 'Trouve cette lettre sur le clavier !';
+
+    // Prononcer automatiquement
+    setTimeout(() => prononcerLettre(lettre), 300);
+  }
+
+  // ══════════════════════════════════════════════
+  // SYNTHÈSE VOCALE
+  // ══════════════════════════════════════════════
+  function prononcerLettre(lettre) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const texte = PRONONCIATIONS[lettre] || lettre;
+    const utter = new SpeechSynthesisUtterance(texte);
+    utter.lang = 'fr-FR';
+    utter.rate = VITESSE_VOIX;
+
+    const btn = document.getElementById('btnEcouter');
+    btn.classList.add('en-lecture');
+    utter.onend = () => btn.classList.remove('en-lecture');
+    utter.onerror = () => btn.classList.remove('en-lecture');
+
+    window.speechSynthesis.speak(utter);
+  }
+
+  function prononcerLettreCourante() {
+    if (indexCourant < lettresSerie.length) {
+      prononcerLettre(lettresSerie[indexCourant]);
+    }
+  }
+
+  function prononcerTexte(texte) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(texte);
+    utter.lang = 'fr-FR';
+    utter.rate = VITESSE_VOIX;
+    window.speechSynthesis.speak(utter);
+  }
+
+  // ══════════════════════════════════════════════
+  // TRAITER UNE RÉPONSE
+  // ══════════════════════════════════════════════
+  function traiterReponse(lettre) {
+    if (enAttente) return;
+    if (indexCourant >= lettresSerie.length) return;
+
+    const cible = lettresSerie[indexCourant];
+    const toucheEl = toucheElements[lettre];
+
+    if (lettre === cible) {
+      // ── BONNE RÉPONSE ──
+      enAttente = true;
+      premierCoup.push(erreursCourantes === 0);
+
+      // Retirer l'indice
+      Object.values(toucheElements).forEach(el => el.classList.remove('indice'));
+
+      // Animer la touche
+      toucheEl.classList.remove('incorrecte', 'indice');
+      toucheEl.classList.add('correcte');
+
+      // Marquer la progression
+      const pt = document.getElementById('point-' + indexCourant);
+      pt.classList.remove('actif');
+      pt.classList.add('reussi');
+      pt.textContent = '✓';
+
+      // Petit retour audio textuel
+      document.getElementById('consigne').textContent = 'Bravo ! 👏';
+
+      // Passer à la suivante
+      indexCourant++;
+
+      setTimeout(() => {
+        toucheEl.classList.remove('correcte');
+        toucheEl.classList.add('trouvee');
+
+        if (indexCourant >= lettresSerie.length) {
+          terminerPartie();
+        } else {
+          afficherLettreCourante();
+        }
+      }, DELAI_SUCCES);
+
+    } else {
+      // ── MAUVAISE RÉPONSE ──
+      erreursCourantes++;
+
+      // Animer la mauvaise touche
+      toucheEl.classList.remove('incorrecte');
+      toucheEl.offsetHeight; // force reflow
+      toucheEl.classList.add('incorrecte');
+      setTimeout(() => toucheEl.classList.remove('incorrecte'), 500);
+
+      // Après N erreurs, montrer l'indice
+      if (erreursCourantes >= ERREURS_AVANT_INDICE) {
+        toucheElements[cible].classList.add('indice');
+        document.getElementById('consigne').textContent = 'Regarde la touche qui clignote ! 👀';
+      } else {
+        document.getElementById('consigne').textContent = 'Essaie encore !';
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // CLAVIER PHYSIQUE
+  // ══════════════════════════════════════════════
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('zoneJeu').classList.contains('visible')) return;
+    if (enAttente) return;
+
+    const lettre = e.key.toUpperCase();
+    if (/^[A-Z]$/.test(lettre)) {
+      e.preventDefault();
+      traiterReponse(lettre);
+    }
+  });
+
+  // ══════════════════════════════════════════════
+  // FIN DE PARTIE
+  // ══════════════════════════════════════════════
+  function terminerPartie() {
+    document.getElementById('zoneJeu').classList.remove('visible');
+
+    const ecran = document.getElementById('ecranFin');
+    ecran.classList.add('visible');
+
+    // Score
+    const nbPremierCoup = premierCoup.filter(x => x).length;
+    const ratio = nbPremierCoup / LETTRES_PAR_SERIE;
+
+    // Bravo animé
+    const bravoEl = document.getElementById('bravoTexte');
+    const mot = ratio >= 0.5 ? 'BRAVO !' : 'Bien joué !';
+    bravoEl.innerHTML = mot.split('').map((c, i) =>
+      c === ' ' ? ' ' : `<span class="bravo-lettre" style="animation-delay:${i * 0.08}s">${c}</span>`
+    ).join('');
+
+    // Étoiles
+    const etoilesEl = document.getElementById('etoiles');
+    let nbEtoiles = 0;
+    if (ratio >= 0.9) nbEtoiles = 3;
+    else if (ratio >= 0.7) nbEtoiles = 2;
+    else if (ratio >= 0.5) nbEtoiles = 1;
+    etoilesEl.textContent = '⭐'.repeat(nbEtoiles) + '☆'.repeat(3 - nbEtoiles);
+
+    // Texte du score
+    document.getElementById('scoreTexte').innerHTML =
+      `<strong>${nbPremierCoup}</strong> lettre${nbPremierCoup > 1 ? 's' : ''} sur ${LETTRES_PAR_SERIE} du premier coup !`;
+
+    // Annonce vocale
+    const msg = ratio >= 0.7 ? 'Bravo! Beau travail!' : 'Bien joué! Continue comme ça!';
+    setTimeout(() => prononcerTexte(msg), 500);
+  }
+
+  // ══════════════════════════════════════════════
+  // NAVIGATION
+  // ══════════════════════════════════════════════
+  function retourAccueil() {
+    window.speechSynthesis.cancel();
+    document.getElementById('zoneJeu').classList.remove('visible');
+    document.getElementById('ecranFin').classList.remove('visible');
+    document.getElementById('ecranAccueil').classList.remove('masque');
+  }
+
+  // ══════════════════════════════════════════════
+  // DÉMARRAGE
+  // ══════════════════════════════════════════════
+  construireClavier();
+</script>
+
+</body>
+</html>
