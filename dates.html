@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hier, aujourd'hui, demain — eleves.ca</title>
+<link rel="stylesheet" href="charte.css">
+<style>
+  .titre {
+    font-size: clamp(18px, 4vw, 26px);
+    font-weight: 700;
+    color: #1a237e;
+    margin-bottom: 8px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .zone-jeu-dates {
+    display: flex;
+    gap: clamp(16px, 5vw, 48px);
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 16px;
+  }
+
+  .col-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .etiquette-slot {
+    font-size: clamp(11px, 2.5vw, 15px);
+    font-weight: 700;
+    color: var(--couleur-foncee);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Rondelles plus grandes pour les jours */
+  .col-slot .rondelle {
+    width: clamp(74px, 20vw, 110px);
+    height: clamp(74px, 20vw, 110px);
+    font-size: clamp(9px, 2vw, 13px);
+  }
+
+  .smiley-slot {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .smiley-slot svg {
+    animation: popIn 0.3s ease;
+  }
+
+  .zone-message {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .message {
+    font-size: clamp(20px, 5vw, 42px);
+    font-weight: 700;
+    text-align: center;
+    animation: apparition 0.5s ease;
+  }
+
+  .pied {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+  }
+</style>
+</head>
+<body class="matiere-francais">
+
+<div class="titre">📅 Glisse les bons jours dans les emplacements.</div>
+
+<button class="btn-audio" id="btnAudio" onclick="jouerConsigne()" title="Écouter la consigne">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f57f17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+  </svg>
+</button>
+
+<!-- Trois slots : HIER — AUJOURD'HUI — DEMAIN -->
+<div class="zone-jeu-dates" id="zoneSlots">
+  <!-- Généré par JS -->
+</div>
+
+<div class="zone-message" id="zoneMessage"></div>
+
+<!-- Pool des 7 jours mélangés -->
+<div class="zone-pool" id="pool"></div>
+
+<div class="rangee-boutons">
+  <button class="btn-secondaire" onclick="recommencer()">🔄 Recommencer</button>
+  <a href="index.html" class="btn-navigation">← Retour au menu</a>
+</div>
+
+<div class="pied">Clique sur une rondelle pour entendre son nom. Glisse hier, aujourd'hui et demain dans les bons emplacements !</div>
+
+<div class="fantome-tactile" id="fantome"></div>
+
+<script>
+// ============ DONNÉES ============
+const JOURS_NOMS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const ETIQUETTES = ["HIER", "AUJOURD'HUI", "DEMAIN"];
+
+// Calcul des bonnes réponses à partir de la date réelle
+function calculerReponsesCorrectes() {
+  const idx = new Date().getDay(); // 0=dim, 1=lun, ..., 6=sam
+  const hier     = (idx + 6) % 7;
+  const demain   = (idx + 1) % 7;
+  return [JOURS_NOMS[hier], JOURS_NOMS[idx], JOURS_NOMS[demain]];
+}
+
+let reponsesCorrectes = calculerReponsesCorrectes();
+let melanges = [];
+let placements = [null, null, null]; // HIER, AUJOURD'HUI, DEMAIN
+let resultats = null;
+let verified = false;
+
+let dragJour = null;
+let dragSource = null;
+let touchInfo = null;
+let isDragging = false;
+let dragStartPos = null;
+const DRAG_THRESHOLD = 10;
+
+// ============ SYNTHÈSE VOCALE ============
+let voixFR = null;
+
+function chargerVoixFR() {
+  const voix = window.speechSynthesis.getVoices();
+  voixFR = voix.find(v => v.lang.startsWith("fr")) || null;
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = chargerVoixFR;
+  chargerVoixFR();
+}
+
+function dire(texte, vitesse) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texte);
+  u.lang = "fr-FR";
+  u.rate = vitesse || 0.85;
+  if (voixFR) u.voice = voixFR;
+  window.speechSynthesis.speak(u);
+}
+
+function pulseElement(el) {
+  if (!el) return;
+  el.classList.remove("lecture");
+  void el.offsetWidth;
+  el.classList.add("lecture");
+}
+
+// ============ AUDIO CONSIGNE ============
+const btnAudio = document.getElementById("btnAudio");
+
+function jouerConsigne() {
+  btnAudio.classList.add("lecture");
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(
+      "Glisse le bon jour de la semaine dans chacun des trois emplacements : hier, aujourd'hui et demain."
+    );
+    u.lang = "fr-FR";
+    u.rate = 0.85;
+    if (voixFR) u.voice = voixFR;
+    u.onend  = () => btnAudio.classList.remove("lecture");
+    u.onerror = () => btnAudio.classList.remove("lecture");
+    window.speechSynthesis.speak(u);
+  } else {
+    btnAudio.classList.remove("lecture");
+  }
+}
+
+// ============ SMILEYS ============
+function smileyVertSVG() {
+  return '<svg width="28" height="28" viewBox="0 0 28 28">' +
+    '<circle cx="14" cy="14" r="13" fill="#4caf50" stroke="#2e7d32" stroke-width="1.5"/>' +
+    '<circle cx="9" cy="11" r="2" fill="white"/>' +
+    '<circle cx="19" cy="11" r="2" fill="white"/>' +
+    '<path d="M 8 17 Q 14 23 20 17" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+}
+
+function smileyOrangeSVG() {
+  return '<svg width="28" height="28" viewBox="0 0 28 28">' +
+    '<circle cx="14" cy="14" r="13" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/>' +
+    '<circle cx="9" cy="11" r="2" fill="white"/>' +
+    '<circle cx="19" cy="11" r="2" fill="white"/>' +
+    '<path d="M 8 21 Q 14 15 20 21" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '</svg>';
+}
+
+// ============ UTILITAIRES ============
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ============ RENDU ============
+function render() {
+  renderSlots();
+  renderPool();
+  renderMessage();
+}
+
+function renderSlots() {
+  const zone = document.getElementById("zoneSlots");
+  zone.innerHTML = "";
+
+  for (let i = 0; i < 3; i++) {
+    const jour = placements[i];
+
+    const col = document.createElement("div");
+    col.className = "col-slot";
+
+    // Étiquette
+    const etiq = document.createElement("div");
+    etiq.className = "etiquette-slot";
+    etiq.textContent = ETIQUETTES[i];
+    col.appendChild(etiq);
+
+    // Rondelle
+    const rondelle = document.createElement("div");
+    rondelle.className = "rondelle " + (jour ? "active" : "vide");
+    rondelle.textContent = jour || "?";
+    rondelle.dataset.slotIndex = i;
+
+    // Clic : dire le jour ou l'étiquette
+    rondelle.addEventListener("click", () => {
+      if (isDragging) return;
+      if (jour) {
+        dire(jour, 0.8);
+        pulseElement(rondelle);
+      } else {
+        dire(ETIQUETTES[i].toLowerCase(), 0.8);
+        pulseElement(rondelle);
+      }
+    });
+
+    // Drop souris
+    rondelle.addEventListener("dragover",  (e) => { e.preventDefault(); rondelle.classList.add("survol"); });
+    rondelle.addEventListener("dragleave", () => rondelle.classList.remove("survol"));
+    rondelle.addEventListener("drop",      (e) => { e.preventDefault(); rondelle.classList.remove("survol"); deposerDansSlot(i); });
+
+    if (jour) {
+      rondelle.draggable = true;
+      rondelle.addEventListener("dragstart", () => { isDragging = true; dragJour = jour; dragSource = i; });
+      rondelle.addEventListener("dragend",   () => { setTimeout(() => isDragging = false, 50); });
+      attacherTactile(rondelle, jour, i);
+    } else {
+      // Tap sur rondelle vide
+      rondelle.addEventListener("touchstart", (e) => {
+        dragStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        isDragging = false;
+      }, { passive: true });
+      rondelle.addEventListener("touchend", () => {
+        if (!isDragging && dragStartPos) {
+          dire(ETIQUETTES[i].toLowerCase(), 0.8);
+          pulseElement(rondelle);
+        }
+        dragStartPos = null;
+        isDragging = false;
+      });
+    }
+
+    col.appendChild(rondelle);
+
+    // Smiley (affiché après validation)
+    const smileyEl = document.createElement("div");
+    smileyEl.className = "smiley-slot";
+    if (verified && resultats && jour) {
+      smileyEl.innerHTML = resultats[i] ? smileyVertSVG() : smileyOrangeSVG();
+    }
+    col.appendChild(smileyEl);
+
+    zone.appendChild(col);
+  }
+}
+
+function renderPool() {
+  const joursEnPool = melanges.filter(j => !placements.includes(j));
+  const poolEl = document.getElementById("pool");
+  poolEl.innerHTML = "";
+
+  if (joursEnPool.length === 0 && !verified) {
+    poolEl.innerHTML = '<span style="color:#999;font-size:14px;font-style:italic;align-self:center;">Tous les jours sont placés !</span>';
+    return;
+  }
+
+  joursEnPool.forEach(jour => {
+    const el = document.createElement("div");
+    el.className = "rondelle active";
+    el.textContent = jour;
+    el.draggable = true;
+
+    el.addEventListener("click", () => {
+      if (!isDragging) { dire(jour, 0.8); pulseElement(el); }
+    });
+
+    el.addEventListener("dragstart", () => { isDragging = true; dragJour = jour; dragSource = "pool"; });
+    el.addEventListener("dragend",   () => { setTimeout(() => isDragging = false, 50); });
+
+    attacherTactile(el, jour, "pool");
+
+    poolEl.appendChild(el);
+  });
+}
+
+function renderMessage() {
+  const zone = document.getElementById("zoneMessage");
+  zone.innerHTML = "";
+
+  if (!verified || !resultats) return;
+
+  const toutCorrect = resultats.every(r => r);
+  if (toutCorrect) {
+    const couleurs = ["#1976d2","#d32f2f","#7b1fa2","#388e3c","#f57c00","#1976d2"];
+    const lettres = "BRAVO!".split("").map((c, i) =>
+      '<span class="bravo-lettre" style="color:' + couleurs[i] + ';animation-delay:' + (i * 0.09) + 's">' + c + '</span>'
+    ).join("");
+    zone.innerHTML = '<div class="message">🎉 ' + lettres + ' 🎉</div>';
+    setTimeout(() => dire("Bravo! Beau travail!", 0.9), 300);
+  } else {
+    zone.innerHTML = '<div class="message-erreur">Pas tout à fait ! Essaie de corriger.</div>';
+    setTimeout(() => dire("Pas tout à fait ! Essaie de corriger.", 0.85), 300);
+  }
+}
+
+// ============ TACTILE ============
+function attacherTactile(el, jour, source) {
+  el.addEventListener("touchstart", (e) => {
+    dragStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    isDragging = false;
+    dragJour = jour;
+    dragSource = source;
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (e) => {
+    if (!dragStartPos) return;
+    const dx = e.touches[0].clientX - dragStartPos.x;
+    const dy = e.touches[0].clientY - dragStartPos.y;
+    if (Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD && !isDragging) {
+      isDragging = true;
+      lancerFantome(e.touches[0].clientX, e.touches[0].clientY, jour);
+    }
+    if (isDragging) {
+      e.preventDefault();
+      bougerFantome(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: false });
+
+  el.addEventListener("touchend", (e) => {
+    if (!isDragging && dragStartPos) {
+      dire(jour, 0.8);
+      pulseElement(el);
+    } else if (isDragging) {
+      finirTactile();
+    }
+    dragStartPos = null;
+    isDragging = false;
+  });
+}
+
+// ============ LOGIQUE DE JEU ============
+function deposerDansSlot(idx) {
+  if (!dragJour) return;
+  const prev = placements[idx];
+  if (typeof dragSource === "number") {
+    placements[dragSource] = prev;
+  }
+  placements[idx] = dragJour;
+  dragJour = null;
+  dragSource = null;
+  verified = false;
+  resultats = null;
+  render();
+  verifierSiComplet();
+}
+
+function deposerDansPool() {
+  if (!dragJour || dragSource === "pool") return;
+  if (typeof dragSource === "number") {
+    placements[dragSource] = null;
+  }
+  dragJour = null;
+  dragSource = null;
+  verified = false;
+  resultats = null;
+  render();
+}
+
+function verifierSiComplet() {
+  if (placements.every(j => j !== null)) {
+    setTimeout(verifier, 400);
+  }
+}
+
+function verifier() {
+  resultats = placements.map((j, i) => j === reponsesCorrectes[i]);
+  verified = true;
+  render();
+}
+
+function recommencer() {
+  reponsesCorrectes = calculerReponsesCorrectes();
+  melanges = shuffle(JOURS_NOMS);
+  placements = [null, null, null];
+  resultats = null;
+  verified = false;
+  render();
+}
+
+// ============ FANTÔME TACTILE ============
+const fantome = document.getElementById("fantome");
+
+function lancerFantome(x, y, jour) {
+  fantome.textContent = jour;
+  fantome.style.display = "flex";
+  fantome.style.left = (x - 40) + "px";
+  fantome.style.top  = (y - 40) + "px";
+}
+
+function bougerFantome(x, y) {
+  fantome.style.left = (x - 40) + "px";
+  fantome.style.top  = (y - 40) + "px";
+  touchInfo = { x, y };
+  document.querySelectorAll(".rondelle").forEach(r => r.classList.remove("survol"));
+  const el = document.elementFromPoint(x, y);
+  if (el) {
+    const slotEl = el.closest("[data-slot-index]");
+    if (slotEl) slotEl.classList.add("survol");
+  }
+}
+
+function finirTactile() {
+  document.querySelectorAll(".rondelle").forEach(r => r.classList.remove("survol"));
+  if (touchInfo) {
+    const el = document.elementFromPoint(touchInfo.x, touchInfo.y);
+    if (el) {
+      const slotEl = el.closest("[data-slot-index]");
+      const poolEl = el.closest(".zone-pool");
+      if (slotEl) deposerDansSlot(parseInt(slotEl.dataset.slotIndex));
+      else if (poolEl) deposerDansPool();
+    }
+  }
+  touchInfo = null;
+  dragJour = null;
+  dragSource = null;
+  fantome.style.display = "none";
+}
+
+// Drop sur le pool (souris)
+document.getElementById("pool").addEventListener("dragover", (e) => e.preventDefault());
+document.getElementById("pool").addEventListener("drop",     (e) => { e.preventDefault(); deposerDansPool(); });
+
+// ============ INIT ============
+recommencer();
+</script>
+</body>
+</html>
