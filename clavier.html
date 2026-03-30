@@ -471,7 +471,7 @@ transition-duration: 0.01ms !important;
   const PRONONCIATIONS = {
     'A':'a', 'B':'bé', 'C':'cé', 'D':'dé', 'E':'euh', 'F':'effe',
     'G':'gé', 'H':'ache', 'I':'i', 'J':'ji', 'K':'ka', 'L':'elle',
-    'M':'aime', 'N':'aine', 'O':'o', 'P':'pé', 'Q':'ku', 'R':'erre',
+    'M':'emme', 'N':'aine', 'O':'o', 'P':'pé', 'Q':'ku', 'R':'erre',
     'S':'esse', 'T':'té', 'U':'u', 'V':'vé', 'W':'double vé',
     'X':'ixe', 'Y':'i grec', 'Z':'zède'
   };
@@ -480,12 +480,15 @@ transition-duration: 0.01ms !important;
   // ÉTAT DU JEU
   // ══════════════════════════════════════════════
   let mode = 'majuscule';        // 'majuscule', 'minuscule', 'les-deux'
-  let lettresSerie = [];          // les 10 lettres de la série
+  let lettresSerie = [];          // les lettres de la série en cours
   let indexCourant = 0;           // position dans la série
   let erreursCourantes = 0;       // erreurs sur la lettre en cours
   let premierCoup = [];           // true/false pour chaque lettre (réussie du 1er coup)
   let enAttente = false;          // bloqué pendant l'animation de succès
   let toucheElements = {};        // map lettre → élément DOM
+
+  // ── Sac de lettres (couverture des 26 + réinjection erreurs) ──
+  let sacLettres = [];            // lettres restantes à couvrir dans le cycle
 
   // ══════════════════════════════════════════════
   // INITIALISATION
@@ -515,7 +518,8 @@ transition-duration: 0.01ms !important;
   function construireProgression() {
     const container = document.getElementById('progression');
     container.innerHTML = '';
-    for (let i = 0; i < LETTRES_PAR_SERIE; i++) {
+    const nb = lettresSerie.length;
+    for (let i = 0; i < nb; i++) {
       const point = document.createElement('div');
       point.className = 'point';
       point.id = 'point-' + i;
@@ -537,15 +541,35 @@ transition-duration: 0.01ms !important;
   // ══════════════════════════════════════════════
   // LANCER UNE PARTIE
   // ══════════════════════════════════════════════
-  function lancerPartie() {
-    // Tirer 10 lettres aléatoires distinctes
-    const toutes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    lettresSerie = [];
-    const copie = [...toutes];
-    for (let i = 0; i < LETTRES_PAR_SERIE; i++) {
-      const idx = Math.floor(Math.random() * copie.length);
-      lettresSerie.push(copie.splice(idx, 1)[0]);
+  function remplirSac() {
+    sacLettres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    // Mélanger (Fisher-Yates)
+    for (let i = sacLettres.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [sacLettres[i], sacLettres[j]] = [sacLettres[j], sacLettres[i]];
     }
+  }
+
+  function piocherSerie() {
+    // Si le sac est vide, le recharger
+    if (sacLettres.length === 0) {
+      remplirSac();
+    }
+
+    // Piocher jusqu'à LETTRES_PAR_SERIE (ou ce qui reste)
+    const nb = Math.min(LETTRES_PAR_SERIE, sacLettres.length);
+    const serie = sacLettres.splice(0, nb);
+    
+    // Mélanger la série pour que l'ordre ne soit pas prévisible
+    for (let i = serie.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [serie[i], serie[j]] = [serie[j], serie[i]];
+    }
+    return serie;
+  }
+
+  function lancerPartie() {
+    lettresSerie = piocherSerie();
 
     indexCourant = 0;
     premierCoup = [];
@@ -592,7 +616,7 @@ transition-duration: 0.01ms !important;
     cibleEl.style.animation = '';
 
     // Mettre à jour la progression
-    for (let i = 0; i < LETTRES_PAR_SERIE; i++) {
+    for (let i = 0; i < lettresSerie.length; i++) {
       const pt = document.getElementById('point-' + i);
       pt.className = 'point';
       if (i < indexCourant) pt.classList.add('reussi');
@@ -653,7 +677,13 @@ transition-duration: 0.01ms !important;
     if (lettre === cible) {
       // ── BONNE RÉPONSE ──
       enAttente = true;
-      premierCoup.push(erreursCourantes === 0);
+      const reussiDuPremierCoup = (erreursCourantes === 0);
+      premierCoup.push(reussiDuPremierCoup);
+
+      // Réinjecter dans le sac si erreur (pour revoir cette lettre plus tard)
+      if (!reussiDuPremierCoup && !sacLettres.includes(cible)) {
+        sacLettres.push(cible);
+      }
 
       // Retirer l'indice
       Object.values(toucheElements).forEach(el => el.classList.remove('indice'));
@@ -730,7 +760,8 @@ transition-duration: 0.01ms !important;
 
     // Score
     const nbPremierCoup = premierCoup.filter(x => x).length;
-    const ratio = nbPremierCoup / LETTRES_PAR_SERIE;
+    const totalSerie = lettresSerie.length;
+    const ratio = nbPremierCoup / totalSerie;
 
     // Bravo animé
     const bravoEl = document.getElementById('bravoTexte');
@@ -749,7 +780,17 @@ transition-duration: 0.01ms !important;
 
     // Texte du score
     document.getElementById('scoreTexte').innerHTML =
-      `<strong>${nbPremierCoup}</strong> lettre${nbPremierCoup > 1 ? 's' : ''} sur ${LETTRES_PAR_SERIE} du premier coup !`;
+      `<strong>${nbPremierCoup}</strong> lettre${nbPremierCoup > 1 ? 's' : ''} sur ${totalSerie} du premier coup !`
+
+    // Info sur le sac restant
+    const restant = sacLettres.length;
+    if (restant > 0) {
+      document.getElementById('scoreTexte').innerHTML +=
+        `<br><span style="font-size:0.85em;color:#888;">Encore ${restant} lettre${restant > 1 ? 's' : ''} à découvrir</span>`;
+    } else {
+      document.getElementById('scoreTexte').innerHTML +=
+        `<br><span style="font-size:0.85em;color:#43a047;">🎉 Toutes les lettres ont été vues !</span>`;
+    }
 
     // Annonce vocale
     const msg = ratio >= 0.7 ? 'Bravo! Beau travail!' : 'Bien joué! Continue comme ça!';
@@ -764,6 +805,8 @@ transition-duration: 0.01ms !important;
     document.getElementById('zoneJeu').classList.remove('visible');
     document.getElementById('ecranFin').classList.remove('visible');
     document.getElementById('ecranAccueil').classList.remove('masque');
+    // Réinitialiser le sac pour un nouveau cycle complet
+    sacLettres = [];
   }
 
   // ══════════════════════════════════════════════
