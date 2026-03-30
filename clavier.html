@@ -6,312 +6,297 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="only light">
 <title>Les lettres du clavier — eleves.ca</title>
+<link rel="stylesheet" href="charte.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
 
-/* ── Couleurs en dur pour compatibilité maximale Safari/GitHub Pages ── */
-
-/* ── Reset ── */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
+/* ── Reset local ── */
 html {
-color-scheme: only light;
+  color-scheme: only light;
 }
 
 body {
-min-height: 100vh;
-background: #F9F6F0;
-font-family: ‘Nunito’, ‘Varela Round’, sans-serif;
-color: #1a237e;
-display: flex;
-flex-direction: column;
-align-items: center;
-padding: 16px 12px;
--webkit-font-smoothing: antialiased;
-user-select: none;
--webkit-user-select: none;
-overflow-x: hidden;
+  font-family: var(--font-jeu);
+  color: #1a237e;
+  padding: 16px 12px;
 }
 
 /* ── Titre ── */
 h1 {
-font-size: clamp(18px, 4vw, 28px);
-font-weight: 800;
-text-align: center;
-margin-bottom: 4px;
-line-height: 1.3;
+  font-size: clamp(18px, 4vw, 28px);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 4px;
+  line-height: 1.3;
 }
 .sous-titre {
-font-size: 12px;
-color: #888;
-margin-bottom: 12px;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
 }
 
 /* ── Barre de progression ── */
 .progression {
-display: flex;
-gap: 8px;
-margin-bottom: 16px;
-flex-wrap: wrap;
-justify-content: center;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 .progression .point {
-width: 28px;
-height: 28px;
-border-radius: 50%;
-background: #e0e0e0;
-border: 2px solid #bdbdbd;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 13px;
-font-weight: 700;
-color: transparent;
-transition: all 0.4s ease;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  border: 2px solid #bdbdbd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: transparent;
+  transition: all 0.4s ease;
 }
 .progression .point.reussi {
-background: #43a047;
-border-color: #1b5e20;
-color: white;
+  background: #43a047;
+  border-color: #1b5e20;
+  color: white;
 }
 .progression .point.actif {
-background: #bbdefb;
-border-color: #1976d2;
-color: #1976d2;
-animation: pulsePoint 1.2s ease infinite;
+  background: #bbdefb;
+  border-color: #1976d2;
+  color: #1976d2;
+  animation: pulsePoint 1.2s ease infinite;
 }
 
 /* ── Zone cible ── */
 .zone-cible {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 6px;
-margin-bottom: 14px;
-min-height: 110px;
-justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  min-height: 110px;
+  justify-content: center;
 }
 .lettre-cible {
-font-size: clamp(52px, 14vw, 90px);
-font-weight: 800;
-color: #0d47a1;
-line-height: 1;
-letter-spacing: 8px;
-animation: apparitionLettre 0.4s ease;
+  font-size: clamp(52px, 14vw, 90px);
+  font-weight: 700;
+  color: #0d47a1;
+  line-height: 1;
+  letter-spacing: 8px;
+  animation: apparitionLettre 0.4s ease;
 }
 .lettre-cible .minuscule {
-color: #1976d2;
+  color: #1976d2;
 }
 .consigne-audio {
-font-size: clamp(13px, 2.5vw, 16px);
-color: #555;
-text-align: center;
+  font-size: clamp(13px, 2.5vw, 16px);
+  color: #555;
+  text-align: center;
 }
 
-/* ── Bouton audio ── */
+/* ── Bouton audio (local pour clavier) ── */
 .btn-ecouter {
-width: 48px;
-height: 48px;
-border-radius: 50%;
-background: linear-gradient(145deg, #fff9c4, #fff176) !important;
-border: 3px solid #f9a825 !important;
-box-shadow: 0 3px 8px rgba(249, 168, 37, 0.35);
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 22px;
-transition: transform 0.15s;
-flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff9c4, #fff176);
+  border: 3px solid #f9a825;
+  box-shadow: 0 3px 8px rgba(249, 168, 37, 0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: transform 0.15s;
+  flex-shrink: 0;
 }
 .btn-ecouter:hover { transform: scale(1.08); }
 .btn-ecouter:active { transform: scale(0.95); }
 .btn-ecouter.en-lecture {
-animation: pulseAudio 0.6s ease infinite alternate;
+  animation: pulseAudio 0.6s ease infinite alternate;
+  border-color: #f57f17;
 }
 
 /* ── Sélecteur de mode ── */
 .mode-selector {
-display: flex;
-gap: 8px;
-margin-bottom: 16px;
-flex-wrap: wrap;
-justify-content: center;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 .mode-btn {
-padding: 8px 18px;
-font-size: clamp(12px, 2.5vw, 15px);
-font-weight: 700;
-font-family: ‘Nunito’, ‘Varela Round’, sans-serif;
-border-radius: 20px;
-border: 2px solid #bdbdbd;
-background: white;
-color: #555;
-cursor: pointer;
-transition: all 0.2s;
+  padding: 8px 18px;
+  font-size: clamp(12px, 2.5vw, 15px);
+  font-weight: 700;
+  font-family: var(--font-jeu);
+  border-radius: 20px;
+  border: 2px solid #bdbdbd;
+  background: white;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 .mode-btn:hover { border-color: #1976d2; color: #1976d2; }
 .mode-btn.actif {
-background: #1976d2 !important;
-color: white !important;
-border-color: #0d47a1 !important;
+  background: #1976d2 !important;
+  color: white !important;
+  border-color: #0d47a1 !important;
 }
 
 /* ── Clavier visuel ── */
 .clavier {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: clamp(4px, 1vw, 8px);
-margin-bottom: 16px;
-width: 100%;
-max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 1vw, 8px);
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 680px;
 }
 .rangee {
-display: flex;
-gap: clamp(3px, 0.8vw, 6px);
-justify-content: center;
+  display: flex;
+  gap: clamp(3px, 0.8vw, 6px);
+  justify-content: center;
 }
 .touche {
-width: clamp(32px, 8vw, 58px);
-height: clamp(36px, 9vw, 58px);
-border-radius: 8px;
-background: linear-gradient(180deg, #fffde7, #f5f0d0);
-border: 2px solid #d4c98a;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: clamp(14px, 3.5vw, 24px);
-font-weight: 800;
-font-family: ‘Nunito’, ‘Varela Round’, sans-serif;
-color: #333;
-cursor: pointer;
-transition: all 0.15s ease;
-box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
-position: relative;
+  width: clamp(32px, 8vw, 58px);
+  height: clamp(36px, 9vw, 58px);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fffde7, #f5f0d0);
+  border: 2px solid #d4c98a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(14px, 3.5vw, 24px);
+  font-weight: 700;
+  font-family: var(--font-jeu);
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+  position: relative;
 }
 .touche:hover {
-transform: translateY(-2px);
-box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
 }
 .touche:active {
-transform: translateY(1px);
-box-shadow: none;
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
 /* ── États des touches ── */
 .touche.correcte {
-background: linear-gradient(180deg, #a5d6a7, #43a047) !important;
-border-color: #1b5e20 !important;
-color: white !important;
-animation: toucheCorrect 0.4s ease;
+  background: linear-gradient(180deg, #a5d6a7, #43a047) !important;
+  border-color: #1b5e20 !important;
+  color: white !important;
+  animation: toucheCorrect 0.4s ease;
 }
 .touche.incorrecte {
-animation: toucheIncorrect 0.4s ease;
-background: linear-gradient(180deg, #ffcdd2, #ef9a9a) !important;
-border-color: #e53935 !important;
+  animation: toucheIncorrect 0.4s ease;
+  background: linear-gradient(180deg, #ffcdd2, #ef9a9a) !important;
+  border-color: #e53935 !important;
 }
 .touche.indice {
-animation: pulseIndice 0.8s ease infinite;
-border-color: #1976d2 !important;
-box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3) !important;
+  animation: pulseIndice 0.8s ease infinite;
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3) !important;
 }
 .touche.trouvee {
-background: linear-gradient(180deg, #81c784, #66bb6a) !important;
-border-color: #43a047 !important;
-color: white !important;
-opacity: 1;
-box-shadow: inset 0 2px 4px rgba(0,0,0,0.15) !important;
+  background: linear-gradient(180deg, #81c784, #66bb6a) !important;
+  border-color: #43a047 !important;
+  color: white !important;
+  opacity: 1;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15) !important;
 }
 
 /* ── Écran de fin ── */
 .ecran-fin {
-display: none;
-flex-direction: column;
-align-items: center;
-gap: 16px;
-text-align: center;
-animation: apparitionLettre 0.5s ease;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  animation: apparitionLettre 0.5s ease;
 }
 .ecran-fin.visible { display: flex; }
 .ecran-fin .bravo {
-font-size: clamp(36px, 10vw, 64px);
-font-weight: 800;
-color: #1b5e20;
-}
-.bravo-lettre {
-display: inline-block;
-animation: lettreRebond 0.6s ease both;
+  font-size: clamp(36px, 10vw, 64px);
+  font-weight: 700;
+  color: #1b5e20;
 }
 .ecran-fin .score {
-font-size: clamp(16px, 4vw, 22px);
-color: #555;
+  font-size: clamp(16px, 4vw, 22px);
+  color: #555;
 }
 .ecran-fin .score strong {
-color: #0d47a1;
-font-size: 1.2em;
+  color: #0d47a1;
+  font-size: 1.2em;
 }
 .etoiles {
-font-size: clamp(28px, 8vw, 48px);
-letter-spacing: 4px;
+  font-size: clamp(28px, 8vw, 48px);
+  letter-spacing: 4px;
 }
 
-/* ── Boutons d’action ── */
+/* ── Boutons d'action ── */
 .boutons-action {
-display: flex;
-gap: 12px;
-flex-wrap: wrap;
-justify-content: center;
-margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
 }
 .btn {
-padding: 10px 24px;
-font-size: clamp(13px, 3vw, 16px);
-font-weight: 700;
-font-family: ‘Nunito’, ‘Varela Round’, sans-serif;
-border-radius: 12px;
-border: none;
-cursor: pointer;
-box-shadow: 0 3px 6px rgba(0,0,0,0.18);
-transition: transform 0.1s, box-shadow 0.1s;
-display: inline-flex;
-align-items: center;
-gap: 8px;
+  padding: 10px 24px;
+  font-size: clamp(13px, 3vw, 16px);
+  font-weight: 700;
+  font-family: var(--font-jeu);
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+  transition: transform 0.1s, box-shadow 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
 }
 .btn:hover { transform: scale(1.05); }
 .btn:active { transform: scale(0.97); box-shadow: none; }
 .btn-principal {
-background: linear-gradient(180deg, #42a5f5, #1976d2) !important;
-color: white !important;
-border: 2px solid #0d47a1 !important;
+  background: linear-gradient(180deg, #42a5f5, #1976d2) !important;
+  color: white !important;
+  border: 2px solid #0d47a1 !important;
 }
 .btn-secondaire {
-background: transparent;
-color: #757575;
-border: 1.5px solid #bdbdbd;
-box-shadow: none;
-font-size: clamp(12px, 2.5vw, 14px);
+  background: transparent;
+  color: #757575;
+  border: 1.5px solid #bdbdbd;
+  box-shadow: none;
+  font-size: clamp(12px, 2.5vw, 14px);
 }
 .btn-secondaire:hover { background: rgba(0,0,0,0.04); }
 
-/* ── Écran d’accueil ── */
+/* ── Écran d'accueil ── */
 .ecran-accueil {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 16px;
-text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
 }
 .ecran-accueil.masque { display: none; }
 .icone-clavier {
-font-size: 56px;
-margin-bottom: 4px;
+  font-size: 56px;
+  margin-bottom: 4px;
 }
 .description {
-font-size: clamp(14px, 3vw, 17px);
-color: #555;
-max-width: 500px;
-line-height: 1.6;
+  font-size: clamp(14px, 3vw, 17px);
+  color: #555;
+  max-width: 500px;
+  line-height: 1.6;
 }
 
 /* ── Zone de jeu ── */
@@ -320,61 +305,45 @@ line-height: 1.6;
 
 /* ── Pied ── */
 .pied {
-font-size: 12px;
-color: #aaa;
-margin-top: auto;
-padding-top: 16px;
+  font-size: 12px;
+  color: #aaa;
+  margin-top: auto;
+  padding-top: 16px;
 }
 
-/* ── Animations ── */
+/* ── Animations locales ── */
 @keyframes apparitionLettre {
-0% { transform: scale(0.5); opacity: 0; }
-60% { transform: scale(1.08); }
-100% { transform: scale(1); opacity: 1; }
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
 }
 @keyframes toucheCorrect {
-0% { transform: scale(1); }
-40% { transform: scale(1.2); }
-100% { transform: scale(1); }
+  0% { transform: scale(1); }
+  40% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 @keyframes toucheIncorrect {
-0%, 100% { transform: translateX(0); }
-20% { transform: translateX(-6px); }
-40% { transform: translateX(6px); }
-60% { transform: translateX(-4px); }
-80% { transform: translateX(4px); }
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
 }
 @keyframes pulseIndice {
-0%, 100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.5); }
-50% { box-shadow: 0 0 0 8px rgba(25, 118, 210, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(25, 118, 210, 0); }
 }
 @keyframes pulsePoint {
-0%, 100% { transform: scale(1); }
-50% { transform: scale(1.15); }
-}
-@keyframes pulseAudio {
-0% { box-shadow: 0 0 0 0 rgba(249, 168, 37, 0.5); }
-100% { box-shadow: 0 0 0 10px rgba(249, 168, 37, 0); }
-}
-@keyframes lettreRebond {
-0% { transform: translateY(20px); opacity: 0; }
-60% { transform: translateY(-5px); }
-100% { transform: translateY(0); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-*, *::before, *::after {
-animation-duration: 0.01ms !important;
-transition-duration: 0.01ms !important;
-}
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }
 
 @media (hover: none) and (pointer: coarse) {
-.touche:hover { transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
-.btn:hover { transform: none; }
-.btn-ecouter:hover { transform: none; }
-.touche { min-height: 44px; min-width: 34px; }
-.btn { min-height: 44px; }
+  .touche:hover { transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
+  .btn:hover { transform: none; }
+  .btn-ecouter:hover { transform: none; }
+  .touche { min-height: 44px; min-width: 34px; }
+  .btn { min-height: 44px; }
 }
 </style>
 
@@ -393,47 +362,43 @@ transition-duration: 0.01ms !important;
       Tu peux appuyer sur ton clavier ou cliquer sur l'écran.
     </p>
 
-```
-<div class="mode-selector">
-  <button class="mode-btn actif" data-mode="majuscule" onclick="choisirMode('majuscule')">A B C</button>
-  <button class="mode-btn" data-mode="minuscule" onclick="choisirMode('minuscule')">a b c</button>
-  <button class="mode-btn" data-mode="les-deux" onclick="choisirMode('les-deux')">A a &nbsp; B b</button>
-</div>
+    <div class="mode-selector">
+      <button class="mode-btn actif" data-mode="majuscule" onclick="choisirMode('majuscule')">A B C</button>
+      <button class="mode-btn" data-mode="minuscule" onclick="choisirMode('minuscule')">a b c</button>
+      <button class="mode-btn" data-mode="les-deux" onclick="choisirMode('les-deux')">A a &nbsp; B b</button>
+    </div>
 
-<button class="btn btn-principal" onclick="lancerPartie()">▶ Commencer</button>
-```
-
+    <button class="btn btn-principal" onclick="lancerPartie()">▶ Commencer</button>
+    <a href="index.html" class="btn btn-secondaire">← Retour au menu</a>
   </div>
 
   <!-- ══════ ZONE DE JEU ══════ -->
 
   <div class="zone-jeu" id="zoneJeu">
 
-```
-<!-- Progression -->
-<div class="progression" id="progression"></div>
+    <!-- Progression -->
+    <div class="progression" id="progression"></div>
 
-<!-- Lettre cible + audio -->
-<div class="zone-cible">
-  <div style="display:flex; align-items:center; gap:12px;">
-    <div class="lettre-cible" id="lettreCible"></div>
-    <button class="btn-ecouter" id="btnEcouter" onclick="prononcerLettreCourante()" title="Écouter la lettre">🔊</button>
-  </div>
-  <p class="consigne-audio" id="consigne">Trouve cette lettre sur le clavier !</p>
-</div>
+    <!-- Lettre cible + audio -->
+    <div class="zone-cible">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="lettre-cible" id="lettreCible"></div>
+        <button class="btn-ecouter" id="btnEcouter" onclick="prononcerLettreCourante()" title="Écouter la lettre">🔊</button>
+      </div>
+      <p class="consigne-audio" id="consigne">Trouve cette lettre sur le clavier !</p>
+    </div>
 
-<!-- Clavier visuel QWERTY -->
-<div class="clavier" id="clavier">
-  <div class="rangee" id="rangee1"></div>
-  <div class="rangee" id="rangee2"></div>
-  <div class="rangee" id="rangee3"></div>
-</div>
+    <!-- Clavier visuel QWERTY -->
+    <div class="clavier" id="clavier">
+      <div class="rangee" id="rangee1"></div>
+      <div class="rangee" id="rangee2"></div>
+      <div class="rangee" id="rangee3"></div>
+    </div>
 
-<!-- Bouton changer mode en cours de jeu -->
-<div class="boutons-action" style="margin-bottom:8px;">
-  <button class="btn-secondaire btn" onclick="retourAccueil()">↩ Menu</button>
-</div>
-```
+    <!-- Bouton menu en cours de jeu -->
+    <div class="boutons-action" style="margin-bottom:8px;">
+      <button class="btn-secondaire btn" onclick="retourAccueil()">↩ Menu</button>
+    </div>
 
   </div>
 
@@ -449,7 +414,7 @@ transition-duration: 0.01ms !important;
     </div>
   </div>
 
-  <p class="pied">eleves.ca — Les lettres du clavier — Démo</p>
+  <p class="pied">eleves.ca — Les lettres du clavier</p>
 
 <script>
   // ══════════════════════════════════════════════
@@ -559,7 +524,7 @@ transition-duration: 0.01ms !important;
     // Piocher jusqu'à LETTRES_PAR_SERIE (ou ce qui reste)
     const nb = Math.min(LETTRES_PAR_SERIE, sacLettres.length);
     const serie = sacLettres.splice(0, nb);
-    
+
     // Mélanger la série pour que l'ordre ne soit pas prévisible
     for (let i = serie.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

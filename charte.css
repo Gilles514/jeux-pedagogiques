@@ -1,0 +1,388 @@
+/* ====================================================
+   charte.css — Charte graphique partagée
+   eleves.ca — Apprendre en s'amusant
+   ==================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+/* ── Variables globales ── */
+:root {
+  --font-jeu: 'Quicksand', sans-serif;
+  --graisse-titre:   700;
+  --graisse-forte:   700;
+  --graisse-normale: 400;
+
+  --fond-global: #F9F6F0;
+
+  /* Matière Français */
+  --francais-principale: #1976d2;
+  --francais-foncee:     #0d47a1;
+  --francais-claire:     #bbdefb;
+  --francais-fond:       #e3f2fd;
+
+  /* Matière Maths */
+  --maths-principale: #7b1fa2;
+  --maths-foncee:     #4a148c;
+  --maths-claire:     #e1bee7;
+  --maths-fond:       #f3e5f5;
+
+  /* Matière Sciences */
+  --sciences-principale: #388e3c;
+  --sciences-foncee:     #1b5e20;
+  --sciences-claire:     #c8e6c9;
+  --sciences-fond:       #e8f5e9;
+
+  /* Matière Création */
+  --creation-principale: #e65100;
+  --creation-foncee:     #bf360c;
+  --creation-claire:     #ffe0b2;
+  --creation-fond:       #fff3e0;
+
+  /* Couleurs fonctionnelles */
+  --succes-principale: #43a047;
+  --succes-fond:       #e8f5e9;
+  --succes-texte:      #1b5e20;
+
+  --erreur-principale: #e53935;
+  --erreur-fond:       #ffebee;
+  --erreur-texte:      #b71c1c;
+
+  --audio-principale: #f9a825;
+  --audio-fond:       #fff9c4;
+  --audio-bord:       #f57f17;
+
+  --neutre-principale: #757575;
+  --neutre-fond:       #f5f5f5;
+  --neutre-bord:       #bdbdbd;
+
+  /* Couleur active par défaut (Français) */
+  --couleur-principale: var(--francais-principale);
+  --couleur-foncee:     var(--francais-foncee);
+  --couleur-claire:     var(--francais-claire);
+  --couleur-fond:       var(--francais-fond);
+}
+
+/* ── Classes de matière ── */
+.matiere-francais {
+  --couleur-principale: var(--francais-principale);
+  --couleur-foncee:     var(--francais-foncee);
+  --couleur-claire:     var(--francais-claire);
+  --couleur-fond:       var(--francais-fond);
+}
+.matiere-maths {
+  --couleur-principale: var(--maths-principale);
+  --couleur-foncee:     var(--maths-foncee);
+  --couleur-claire:     var(--maths-claire);
+  --couleur-fond:       var(--maths-fond);
+}
+.matiere-sciences {
+  --couleur-principale: var(--sciences-principale);
+  --couleur-foncee:     var(--sciences-foncee);
+  --couleur-claire:     var(--sciences-claire);
+  --couleur-fond:       var(--sciences-fond);
+}
+.matiere-creation {
+  --couleur-principale: var(--creation-principale);
+  --couleur-foncee:     var(--creation-foncee);
+  --couleur-claire:     var(--creation-claire);
+  --couleur-fond:       var(--creation-fond);
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Base ── */
+html {
+  color-scheme: only light;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--fond-global);
+  font-family: var(--font-jeu);
+  color: #1a237e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 12px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Rondelles de jeu ── */
+.rondelle {
+  width: clamp(52px, 14vw, 100px);
+  height: clamp(52px, 14vw, 100px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(9px, 2vw, 14px);
+  font-weight: var(--graisse-forte);
+  font-family: var(--font-jeu);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-align: center;
+  padding: 4px;
+  line-height: 1.2;
+}
+
+.rondelle.vide {
+  color: #999;
+  background: radial-gradient(circle at 40% 35%, #ffffff, #e8e8e8);
+  border: 3px solid var(--neutre-bord);
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.8),
+    inset 0 -2px 4px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.rondelle.active {
+  color: white;
+  background: linear-gradient(145deg, var(--couleur-foncee), var(--couleur-principale));
+  border: 3px solid var(--couleur-foncee);
+  box-shadow:
+    inset 0 -3px 6px rgba(0,0,0,0.25),
+    0 3px 8px rgba(0,0,0,0.2);
+  cursor: grab;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.rondelle.active:hover {
+  transform: scale(1.08);
+}
+
+.rondelle.survol {
+  border-color: var(--audio-principale) !important;
+  box-shadow: 0 0 0 4px rgba(249,168,37,0.3) !important;
+}
+
+.rondelle.lecture {
+  animation: pulseLecture 0.4s ease;
+}
+
+/* ── Zone de pool ── */
+.zone-pool {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  min-height: 80px;
+  width: 100%;
+  max-width: 720px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 16px;
+  border: 2px dashed var(--couleur-claire);
+  margin-bottom: 20px;
+}
+
+/* ── Hiérarchie de boutons ── */
+.btn-principal,
+.btn-audio,
+.btn-navigation,
+.btn-secondaire {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-jeu);
+  font-weight: var(--graisse-forte);
+  cursor: pointer;
+  border-radius: 12px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  text-decoration: none;
+}
+
+/* Bouton principal (action forte) */
+.btn-principal {
+  padding: 10px 28px;
+  font-size: clamp(14px, 3vw, 18px);
+  color: #fff;
+  background: linear-gradient(180deg, var(--couleur-principale), var(--couleur-foncee));
+  border: 2px solid var(--couleur-foncee);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+.btn-principal:hover  { transform: scale(1.05); }
+.btn-principal:active { transform: scale(0.97); box-shadow: none; }
+
+/* Bouton audio (rond, jaune) */
+.btn-audio {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--audio-principale);
+  background: linear-gradient(145deg, var(--audio-fond), #fff176);
+  box-shadow: 0 3px 8px rgba(249,168,37,0.3);
+  padding: 0;
+  flex-shrink: 0;
+}
+.btn-audio:hover  { transform: scale(1.1); }
+.btn-audio:active { transform: scale(0.95); }
+.btn-audio.lecture {
+  animation: pulseAudio 0.6s ease infinite alternate;
+  border-color: var(--audio-bord);
+}
+
+/* Bouton de navigation (retour au menu) */
+.btn-navigation {
+  padding: 8px 20px;
+  font-size: clamp(13px, 2.5vw, 16px);
+  color: #555;
+  background: white;
+  border: 2px solid var(--neutre-bord);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.btn-navigation:hover {
+  transform: scale(1.05);
+  border-color: var(--couleur-principale);
+  color: var(--couleur-principale);
+}
+.btn-navigation:active { transform: scale(0.97); }
+
+/* Bouton secondaire (recommencer, actions légères) */
+.btn-secondaire {
+  padding: 9px 24px;
+  font-size: clamp(13px, 2.5vw, 16px);
+  color: #fff;
+  background: linear-gradient(180deg, #66bb6a, #43a047);
+  border: 2px solid #1b5e20;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+}
+.btn-secondaire:hover  { transform: scale(1.05); }
+.btn-secondaire:active { transform: scale(0.97); box-shadow: none; }
+
+/* ── Messages de résultat ── */
+.message-succes {
+  font-size: clamp(20px, 5vw, 42px);
+  font-weight: var(--graisse-titre);
+  color: var(--succes-texte);
+  text-align: center;
+  animation: apparition 0.5s ease;
+}
+
+.message-erreur {
+  font-size: clamp(14px, 3.5vw, 22px);
+  font-weight: var(--graisse-forte);
+  color: var(--erreur-principale);
+  background: var(--erreur-fond);
+  border-radius: 12px;
+  padding: 10px 20px;
+  text-align: center;
+  animation: apparition 0.4s ease;
+}
+
+.bravo-lettre {
+  display: inline-block;
+  animation: lettreRebond 0.6s ease both;
+}
+
+/* ── Fantôme tactile ── */
+.fantome-tactile {
+  position: fixed;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--couleur-foncee), var(--couleur-principale));
+  border: 3px solid var(--couleur-foncee);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: var(--graisse-forte);
+  font-family: var(--font-jeu);
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.9;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
+}
+
+/* ── Utilitaires ── */
+.centrer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.rangee-boutons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.grille-slots {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 720px;
+  margin-bottom: 8px;
+}
+
+/* ── Animations ── */
+@keyframes popIn {
+  0%   { transform: scale(0); opacity: 0; }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes apparition {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes lettreRebond {
+  0%   { transform: translateY(20px); opacity: 0; }
+  60%  { transform: translateY(-5px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulseLecture {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pulseAudio {
+  0%   { box-shadow: 0 0 0 0 rgba(249,168,37,0.5); }
+  100% { box-shadow: 0 0 0 10px rgba(249,168,37,0); }
+}
+
+/* ── Accessibilité : mouvement réduit ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Accessibilité : écran tactile (WCAG 44px) ── */
+@media (hover: none) and (pointer: coarse) {
+  .rondelle.active:hover { transform: none; }
+  .btn-principal:hover,
+  .btn-navigation:hover,
+  .btn-secondaire:hover  { transform: none; }
+  .btn-audio:hover       { transform: none; }
+
+  .btn-principal,
+  .btn-navigation,
+  .btn-secondaire { min-height: 44px; }
+  .btn-audio      { min-width: 44px; min-height: 44px; }
+  .rondelle       { min-width: 44px; min-height: 44px; }
+}
