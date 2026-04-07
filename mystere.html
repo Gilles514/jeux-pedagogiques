@@ -1,0 +1,689 @@
+<!--
+  eleves.ca — Apprendre en s'amusant
+  Copyright (C) 2026  Gilles Lavorel
+
+  Ce programme est un logiciel libre : vous pouvez le redistribuer
+  et/ou le modifier selon les termes de la Licence Publique Générale
+  GNU publiée par la Free Software Foundation, version 3.
+
+  https://www.gnu.org/licenses/gpl-3.0.html
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le nombre mystère — eleves.ca</title>
+<link rel="stylesheet" href="charte.css">
+<style>
+  .titre {
+    font-size: clamp(18px, 4vw, 26px);
+    font-weight: 700;
+    color: #4a148c;
+    margin-bottom: 4px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .sous-titre {
+    font-size: clamp(11px, 2vw, 13px);
+    font-weight: 400;
+    color: #888;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .consigne {
+    text-align: center;
+    color: #555;
+    font-size: clamp(13px, 2.5vw, 15px);
+    margin: 4px 0 14px;
+  }
+
+  /* Zone de jeu principale */
+  .zone-jeu {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: 800px;
+    justify-content: center;
+  }
+
+  /* Panneau critères */
+  .panneau-criteres {
+    background: #f3e5f5;
+    border: 2px solid #e1bee7;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 210px;
+    max-width: 270px;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+
+  .panneau-titre {
+    font-size: clamp(13px, 2.5vw, 15px);
+    font-weight: 700;
+    color: #4a148c;
+    margin: 0 0 12px 0;
+  }
+
+  .carte-critere {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1.5px solid #ce93d8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    min-height: 44px;
+    font-size: clamp(12px, 2.3vw, 14px);
+    color: #4a148c;
+    line-height: 1.35;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.1s ease;
+  }
+
+  .carte-critere:last-child {
+    margin-bottom: 0;
+  }
+
+  .carte-critere:hover {
+    background: #f9f0fc;
+  }
+
+  /* Grille 5×5 */
+  .grille-nombres {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    flex: 1;
+    max-width: 340px;
+  }
+
+  .case-nombre {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 2px solid #e1bee7;
+    border-radius: 6px;
+    font-size: clamp(15px, 3.5vw, 22px);
+    font-weight: 700;
+    color: #4a148c;
+    cursor: pointer;
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .case-nombre:hover {
+    border-color: #ce93d8;
+  }
+
+  .case-nombre.eliminee {
+    background: #fce4ec;
+    border-color: #f48fb1;
+  }
+
+  .nombre-texte {
+    position: relative;
+    z-index: 1;
+  }
+
+  .case-nombre.eliminee .nombre-texte {
+    text-decoration: line-through;
+    color: #bdbdbd;
+  }
+
+  .icone-x {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: none;
+    display: none;
+  }
+
+  .case-nombre.eliminee .icone-x {
+    display: block;
+  }
+
+  /* Zone réponse */
+  .zone-reponse {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .label-reponse {
+    font-size: clamp(14px, 3vw, 17px);
+    font-weight: 700;
+    color: #4a148c;
+  }
+
+  .input-reponse {
+    border: 2px solid #9c27b0;
+    border-radius: 8px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #4a148c;
+    width: 80px;
+    text-align: center;
+    padding: 6px 4px;
+    outline: none;
+    min-height: 44px;
+    transition: border-color 0.15s ease, background 0.2s ease;
+  }
+
+  .input-reponse:focus {
+    border-color: #4a148c;
+    box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.15);
+  }
+
+  .input-reponse.correct {
+    background: #43a047;
+    border-color: #1b5e20;
+    color: white;
+  }
+
+  .input-reponse.shake {
+    animation: secousse 0.4s ease;
+  }
+
+  .btn-verifier {
+    background: #7b1fa2;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: clamp(14px, 3vw, 16px);
+    font-weight: 700;
+    padding: 10px 22px;
+    cursor: pointer;
+    min-height: 44px;
+    transition: background 0.15s ease;
+  }
+
+  .btn-verifier:hover {
+    background: #6a1b9a;
+  }
+
+  .btn-verifier:active {
+    background: #4a148c;
+  }
+
+  /* Messages */
+  .zone-message {
+    text-align: center;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .message-erreur {
+    font-size: clamp(13px, 2.8vw, 16px);
+    color: #d32f2f;
+    font-weight: 700;
+  }
+
+  .bravo-bloc {
+    font-size: clamp(22px, 5vw, 36px);
+    font-weight: 700;
+    animation: apparition 0.5s ease;
+  }
+
+  .pied {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+  }
+
+  /* Animations propres à ce jeu */
+  @keyframes secousse {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-8px); }
+    40%       { transform: translateX(8px); }
+    60%       { transform: translateX(-6px); }
+    80%       { transform: translateX(6px); }
+  }
+
+  @keyframes apparition {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .zone-jeu {
+      flex-direction: column;
+    }
+    .panneau-criteres {
+      max-width: 100%;
+      width: 100%;
+    }
+    .grille-nombres {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+
+  /* Accessibilité mouvement */
+  @media (prefers-reduced-motion: reduce) {
+    .bravo-lettre        { animation: none !important; }
+    .input-reponse.shake { animation: none !important; }
+    .carte-critere.lecture { animation: none !important; }
+    .case-nombre.lecture   { animation: none !important; }
+  }
+
+  /* Tactile */
+  @media (hover: none) and (pointer: coarse) {
+    .carte-critere:hover { background: white; }
+    .btn-verifier:hover  { background: #7b1fa2; }
+    .case-nombre:hover   { border-color: #e1bee7; }
+    .case-nombre.eliminee:hover { border-color: #f48fb1; }
+    .carte-critere { min-height: 48px; }
+    .case-nombre   { min-width: 44px; min-height: 44px; }
+  }
+</style>
+</head>
+<body class="matiere-maths">
+
+<div class="titre">🔢 Le nombre mystère</div>
+<div class="sous-titre">eleves.ca — Apprendre en s'amusant</div>
+
+<button class="btn-audio" id="btnAudio" onclick="jouerConsigne()" title="Écouter la consigne">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f57f17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+  </svg>
+</button>
+
+<p class="consigne">Trouve le nombre mystère en éliminant tous les autres !</p>
+
+<div class="zone-jeu">
+  <div class="panneau-criteres">
+    <div class="panneau-titre">Dans la grille :</div>
+    <div id="listeCriteres"></div>
+  </div>
+
+  <div class="grille-nombres" id="grilleNombres" role="group" aria-label="Grille de nombres"></div>
+</div>
+
+<div class="zone-reponse">
+  <span class="label-reponse">Réponse :</span>
+  <input type="number" class="input-reponse" id="inputReponse"
+         min="1" max="69" placeholder="?"
+         aria-label="Entrez le nombre mystère"
+         onkeydown="if(event.key==='Enter') verifier()">
+  <button class="btn-verifier" onclick="verifier()">Vérifier</button>
+</div>
+
+<div class="zone-message" id="zoneMessage" aria-live="polite"></div>
+
+<div class="rangee-boutons">
+  <button class="btn-secondaire" onclick="nouveauDefi()">🔄 Nouveau défi</button>
+  <a href="index.html" class="btn-navigation">← Retour au menu</a>
+</div>
+
+<div class="pied">eleves.ca — Le nombre mystère</div>
+
+<script>
+// ============ SYNTHÈSE VOCALE ============
+let voixFR = null;
+
+function chargerVoixFR() {
+  const voix = window.speechSynthesis.getVoices();
+  voixFR = voix.find(v => v.lang.startsWith("fr")) || null;
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = chargerVoixFR;
+  chargerVoixFR();
+}
+
+function dire(texte, vitesse) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texte);
+  u.lang = "fr-FR";
+  u.rate = vitesse || 0.85;
+  if (voixFR) u.voice = voixFR;
+  window.speechSynthesis.speak(u);
+}
+
+function pulseElement(el) {
+  if (!el) return;
+  el.classList.remove("lecture");
+  void el.offsetWidth;
+  el.classList.add("lecture");
+}
+
+// ============ BOUTON AUDIO CONSIGNE ============
+const btnAudio = document.getElementById("btnAudio");
+
+function jouerConsigne() {
+  btnAudio.classList.add("lecture");
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(
+      "Trouve le nombre mystère en éliminant tous les autres ! " +
+      "Lis chaque critère et clique sur les nombres à éliminer. " +
+      "Quand il reste un seul nombre, c'est la réponse !"
+    );
+    u.lang = "fr-FR";
+    u.rate = 0.85;
+    if (voixFR) u.voice = voixFR;
+    u.onend  = () => btnAudio.classList.remove("lecture");
+    u.onerror = () => btnAudio.classList.remove("lecture");
+    window.speechSynthesis.speak(u);
+  } else {
+    btnAudio.classList.remove("lecture");
+  }
+}
+
+// ============ ÉTAT GLOBAL ============
+let puzzle = null; // { grille, criteres, solution }
+
+// ============ UTILITAIRES ============
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function chiffreUnites(n)  { return n % 10; }
+function chiffreDizaines(n) { return Math.floor(n / 10); }
+
+// ============ BANQUE DE CRITÈRES ============
+function construireBanqueCriteres() {
+  const banque = [];
+
+  // Famille 1 : chiffre à une position (unités ou dizaines)
+  for (let d = 0; d <= 9; d++) {
+    banque.push({
+      famille: 1,
+      texte: `Élimine les nombres qui ont un ${d} à la position des unités.`,
+      test: n => chiffreUnites(n) === d
+    });
+    // Dizaines : seulement d=1..6 sont pertinents pour 1–69
+    if (d >= 1 && d <= 6) {
+      banque.push({
+        famille: 1,
+        texte: `Élimine les nombres qui ont un ${d} à la position des dizaines.`,
+        test: n => chiffreDizaines(n) === d
+      });
+    }
+  }
+
+  // Famille 2 : comparaison (seuil de 10 à 60)
+  for (let seuil = 10; seuil <= 60; seuil += 5) {
+    banque.push({
+      famille: 2,
+      texte: `Élimine les nombres plus grands que ${seuil}.`,
+      test: n => n > seuil
+    });
+    banque.push({
+      famille: 2,
+      texte: `Élimine les nombres plus petits que ${seuil}.`,
+      test: n => n < seuil
+    });
+  }
+
+  // Famille 3 : parité
+  banque.push({
+    famille: 3,
+    texte: "Élimine les nombres qui sont pairs.",
+    test: n => n % 2 === 0
+  });
+  banque.push({
+    famille: 3,
+    texte: "Élimine les nombres qui sont impairs.",
+    test: n => n % 2 !== 0
+  });
+
+  // Famille 4 : intervalle inclusif (A et B compris, écart 10–30)
+  for (let a = 5; a <= 50; a += 5) {
+    for (let ecart = 10; ecart <= 30; ecart += 5) {
+      const b = a + ecart;
+      if (b > 69) break;
+      banque.push({
+        famille: 4,
+        texte: `Élimine les nombres compris entre ${a} et ${b}.`,
+        test: n => n >= a && n <= b
+      });
+    }
+  }
+
+  return banque;
+}
+
+const BANQUE = construireBanqueCriteres();
+const TOUS_NOMBRES = Array.from({ length: 69 }, (_, i) => i + 1);
+
+// ============ GÉNÉRATION DE PUZZLE ============
+function genererPuzzle() {
+  for (let tentative = 0; tentative < 1000; tentative++) {
+    const res = tenterGeneration();
+    if (res) return res;
+  }
+  // Fallback déterministe
+  return {
+    grille: shuffle([42, 3,5,7,11,13,17,19,21,23,25,27,29,31,33,35,37,39,43,45,47,49,51,53,55]),
+    criteres: [
+      { famille: 2, texte: "Élimine les nombres plus petits que 40.", test: n => n < 40 },
+      { famille: 2, texte: "Élimine les nombres plus grands que 44.", test: n => n > 44 },
+      { famille: 3, texte: "Élimine les nombres qui sont impairs.",   test: n => n % 2 !== 0 }
+    ],
+    solution: 42
+  };
+}
+
+function tenterGeneration() {
+  const nbCriteres = Math.random() < 0.5 ? 3 : 4;
+
+  // Sélectionner nbCriteres critères (≥ 2 familles distinctes, pas 2 critères famille 3)
+  const candidats = shuffle(BANQUE);
+  const criteres  = [];
+  const familles  = new Set();
+
+  for (const c of candidats) {
+    if (criteres.length >= nbCriteres) break;
+    if (c.famille === 3 && familles.has(3)) continue; // pas deux critères de parité
+    criteres.push(c);
+    familles.add(c.famille);
+  }
+
+  if (criteres.length < nbCriteres || familles.size < 2) return null;
+
+  // Survivants potentiels : nombres non éliminés par aucun critère
+  const survivants = TOUS_NOMBRES.filter(n => !criteres.some(c => c.test(n)));
+  if (survivants.length === 0) return null;
+
+  // Solution aléatoire parmi les survivants
+  const solution = survivants[Math.floor(Math.random() * survivants.length)];
+
+  // Distracteurs : éliminés par au moins un critère, distincts de la solution
+  const distracteursCandidats = shuffle(
+    TOUS_NOMBRES.filter(n => n !== solution && criteres.some(c => c.test(n)))
+  );
+
+  if (distracteursCandidats.length < 24) return null;
+
+  const distracteurs = distracteursCandidats.slice(0, 24);
+
+  // Chaque critère doit éliminer au moins 3 distracteurs (pédagogiquement utile)
+  for (const c of criteres) {
+    if (distracteurs.filter(n => c.test(n)).length < 3) return null;
+  }
+
+  // Vérification finale : exactement la solution survit
+  const grille = shuffle([solution, ...distracteurs]);
+  const survie  = grille.filter(n => !criteres.some(c => c.test(n)));
+  if (survie.length !== 1 || survie[0] !== solution) return null;
+
+  return { grille, criteres, solution };
+}
+
+// ============ RENDU — CRITÈRES ============
+function renderCriteres(criteres) {
+  const container = document.getElementById("listeCriteres");
+  container.innerHTML = "";
+
+  const iconeHP = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="#9c27b0" stroke-width="2.5" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true" flex-shrink="0">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>`;
+
+  criteres.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "carte-critere";
+    div.setAttribute("role", "button");
+    div.setAttribute("tabindex", "0");
+    div.setAttribute("aria-label", "Lire : " + c.texte);
+    div.innerHTML = iconeHP + `<span>${c.texte}</span>`;
+
+    const lire = () => { dire(c.texte, 0.85); pulseElement(div); };
+    div.addEventListener("click", lire);
+    div.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); lire(); }
+    });
+
+    container.appendChild(div);
+  });
+}
+
+// ============ RENDU — GRILLE ============
+function creerSVGCroix() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "55%");
+  svg.setAttribute("height", "55%");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "#e53935");
+  svg.setAttribute("stroke-width", "3.5");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("aria-hidden", "true");
+  svg.classList.add("icone-x");
+
+  [[4, 4, 20, 20], [20, 4, 4, 20]].forEach(([x1, y1, x2, y2]) => {
+    const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    l.setAttribute("x1", x1); l.setAttribute("y1", y1);
+    l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+    svg.appendChild(l);
+  });
+
+  return svg;
+}
+
+function renderGrille(grille) {
+  const container = document.getElementById("grilleNombres");
+  container.innerHTML = "";
+
+  grille.forEach(n => {
+    const div = document.createElement("div");
+    div.className = "case-nombre";
+    div.dataset.nombre = n;
+    div.setAttribute("role", "button");
+    div.setAttribute("tabindex", "0");
+    div.setAttribute("aria-label", `Nombre ${n}`);
+
+    const span = document.createElement("span");
+    span.className = "nombre-texte";
+    span.textContent = n;
+
+    div.appendChild(span);
+    div.appendChild(creerSVGCroix());
+
+    const basculer = () => {
+      dire(String(n), 0.9);
+      div.classList.toggle("eliminee");
+      const estEliminee = div.classList.contains("eliminee");
+      div.setAttribute("aria-label", `Nombre ${n}${estEliminee ? ", éliminé" : ""}`);
+      pulseElement(div);
+    };
+
+    div.addEventListener("click", basculer);
+    div.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); basculer(); }
+    });
+
+    container.appendChild(div);
+  });
+}
+
+// ============ VÉRIFICATION ============
+function verifier() {
+  const input = document.getElementById("inputReponse");
+  const zone  = document.getElementById("zoneMessage");
+  const val   = parseInt(input.value, 10);
+
+  if (isNaN(val)) {
+    zone.innerHTML = '<div class="message-erreur">Entre un nombre dans la case !</div>';
+    dire("Entre un nombre dans la case !", 0.85);
+    return;
+  }
+
+  if (val === puzzle.solution) {
+    input.classList.add("correct");
+    const couleurs = ["#1976d2","#d32f2f","#7b1fa2","#388e3c","#f57c00","#0097a7","#d32f2f","#388e3c"];
+    const lettres  = "BRAVO !!!".split("").map((c, i) =>
+      `<span class="bravo-lettre" style="color:${couleurs[i % couleurs.length]};animation-delay:${i * 0.08}s">${c}</span>`
+    ).join("");
+    zone.innerHTML = `<div class="bravo-bloc">🎉 ${lettres} 🎉</div>`;
+    setTimeout(() => dire("Bravo ! Beau travail !", 0.9), 300);
+  } else {
+    // Tremblement de l'input
+    input.classList.remove("shake");
+    void input.offsetWidth;
+    input.classList.add("shake");
+    setTimeout(() => input.classList.remove("shake"), 450);
+
+    const msg = "Ce n'est pas le bon nombre. Vérifie tes éliminations !";
+    zone.innerHTML = `<div class="message-erreur">${msg}</div>`;
+    dire(msg, 0.85);
+    input.value = "";
+  }
+}
+
+// ============ NOUVEAU DÉFI ============
+function nouveauDefi() {
+  puzzle = genererPuzzle();
+
+  const input = document.getElementById("inputReponse");
+  input.value = "";
+  input.classList.remove("correct", "shake");
+
+  document.getElementById("zoneMessage").innerHTML = "";
+
+  renderCriteres(puzzle.criteres);
+  renderGrille(puzzle.grille);
+}
+
+// ============ INIT ============
+nouveauDefi();
+</script>
+</body>
+</html>
