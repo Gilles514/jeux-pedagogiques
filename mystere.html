@@ -415,20 +415,25 @@ function chiffreUnites(n)  { return n % 10; }
 function chiffreDizaines(n) { return Math.floor(n / 10); }
 
 // ============ BANQUE DE CRITÈRES ============
+// Chaque critère porte un champ `sousType` utilisé pour détecter les conflits :
+//   famille 1 → "unites" | "dizaines"
+//   famille 2 → "gt" (plus grand que) | "lt" (plus petit que)
+//   famille 3 → "pair" | "impair"
+//   famille 4 → pas de sousType (conflit vérifié par intersection)
 function construireBanqueCriteres() {
   const banque = [];
 
   // Famille 1 : chiffre à une position (unités ou dizaines)
   for (let d = 0; d <= 9; d++) {
     banque.push({
-      famille: 1,
+      famille: 1, sousType: "unites",
       texte: `Élimine les nombres qui ont un ${d} à la position des unités.`,
       test: n => chiffreUnites(n) === d
     });
     // Dizaines : seulement d=1..6 sont pertinents pour 1–69
     if (d >= 1 && d <= 6) {
       banque.push({
-        famille: 1,
+        famille: 1, sousType: "dizaines",
         texte: `Élimine les nombres qui ont un ${d} à la position des dizaines.`,
         test: n => chiffreDizaines(n) === d
       });
@@ -438,12 +443,12 @@ function construireBanqueCriteres() {
   // Famille 2 : comparaison (seuil de 10 à 60)
   for (let seuil = 10; seuil <= 60; seuil += 5) {
     banque.push({
-      famille: 2,
+      famille: 2, sousType: "gt",
       texte: `Élimine les nombres plus grands que ${seuil}.`,
       test: n => n > seuil
     });
     banque.push({
-      famille: 2,
+      famille: 2, sousType: "lt",
       texte: `Élimine les nombres plus petits que ${seuil}.`,
       test: n => n < seuil
     });
@@ -451,12 +456,12 @@ function construireBanqueCriteres() {
 
   // Famille 3 : parité
   banque.push({
-    famille: 3,
+    famille: 3, sousType: "pair",
     texte: "Élimine les nombres qui sont pairs.",
     test: n => n % 2 === 0
   });
   banque.push({
-    famille: 3,
+    famille: 3, sousType: "impair",
     texte: "Élimine les nombres qui sont impairs.",
     test: n => n % 2 !== 0
   });
@@ -480,6 +485,43 @@ function construireBanqueCriteres() {
 const BANQUE = construireBanqueCriteres();
 const TOUS_NOMBRES = Array.from({ length: 69 }, (_, i) => i + 1);
 
+// ============ VALIDATIONS DE COMPATIBILITÉ ============
+
+// Vérifie que le candidat est compatible avec les critères déjà choisis.
+// Règles structurelles (avant de tester les nombres) :
+//   - Famille 2 : pas deux critères dans le même sens (gt+gt ou lt+lt)
+//   - Famille 1 : pas deux critères sur la même position (unites+unites ou dizaines+dizaines)
+//   - Famille 3 : déjà géré via sousType unique
+//   - Famille 4 : pas deux intervalles dont l'intersection ≥ 3 nombres
+function estCompatible(criteres, candidat) {
+  for (const c of criteres) {
+    if (c.famille === 2 && candidat.famille === 2) {
+      if (c.sousType === candidat.sousType) return false;
+    }
+    if (c.famille === 1 && candidat.famille === 1) {
+      if (c.sousType === candidat.sousType) return false;
+    }
+    if (c.famille === 4 && candidat.famille === 4) {
+      const intersection = TOUS_NOMBRES.filter(n => c.test(n) && candidat.test(n)).length;
+      if (intersection >= 3) return false;
+    }
+  }
+  return true;
+}
+
+// Vérifie que chaque critère a une contribution exclusive d'au moins 2 nombres dans [1,69].
+// "Contribution exclusive" = nombres éliminés par ce critère et par aucun autre.
+function aContributionExclusive(criteres) {
+  for (let i = 0; i < criteres.length; i++) {
+    const autresTests = criteres.filter((_, j) => j !== i).map(c => c.test);
+    const exclusifs = TOUS_NOMBRES.filter(
+      n => criteres[i].test(n) && !autresTests.some(t => t(n))
+    );
+    if (exclusifs.length < 2) return false;
+  }
+  return true;
+}
+
 // ============ GÉNÉRATION DE PUZZLE ============
 function genererPuzzle() {
   for (let tentative = 0; tentative < 1000; tentative++) {
@@ -490,9 +532,9 @@ function genererPuzzle() {
   return {
     grille: shuffle([42, 3,5,7,11,13,17,19,21,23,25,27,29,31,33,35,37,39,43,45,47,49,51,53,55]),
     criteres: [
-      { famille: 2, texte: "Élimine les nombres plus petits que 40.", test: n => n < 40 },
-      { famille: 2, texte: "Élimine les nombres plus grands que 44.", test: n => n > 44 },
-      { famille: 3, texte: "Élimine les nombres qui sont impairs.",   test: n => n % 2 !== 0 }
+      { famille: 2, sousType: "lt", texte: "Élimine les nombres plus petits que 40.", test: n => n < 40 },
+      { famille: 2, sousType: "gt", texte: "Élimine les nombres plus grands que 44.", test: n => n > 44 },
+      { famille: 3, sousType: "impair", texte: "Élimine les nombres qui sont impairs.", test: n => n % 2 !== 0 }
     ],
     solution: 42
   };
@@ -501,19 +543,25 @@ function genererPuzzle() {
 function tenterGeneration() {
   const nbCriteres = Math.random() < 0.5 ? 3 : 4;
 
-  // Sélectionner nbCriteres critères (≥ 2 familles distinctes, pas 2 critères famille 3)
+  // Sélectionner nbCriteres critères :
+  //   - ≥ 2 familles distinctes
+  //   - compatibles structurellement (pas de doublons de direction/position/intervalle)
   const candidats = shuffle(BANQUE);
   const criteres  = [];
   const familles  = new Set();
 
   for (const c of candidats) {
     if (criteres.length >= nbCriteres) break;
-    if (c.famille === 3 && familles.has(3)) continue; // pas deux critères de parité
+    if (c.famille === 3 && familles.has(3)) continue;
+    if (!estCompatible(criteres, c)) continue;
     criteres.push(c);
     familles.add(c.famille);
   }
 
   if (criteres.length < nbCriteres || familles.size < 2) return null;
+
+  // Chaque critère doit avoir une contribution exclusive ≥ 2 dans la plage 1–69
+  if (!aContributionExclusive(criteres)) return null;
 
   // Survivants potentiels : nombres non éliminés par aucun critère
   const survivants = TOUS_NOMBRES.filter(n => !criteres.some(c => c.test(n)));
@@ -531,7 +579,7 @@ function tenterGeneration() {
 
   const distracteurs = distracteursCandidats.slice(0, 24);
 
-  // Chaque critère doit éliminer au moins 3 distracteurs (pédagogiquement utile)
+  // Chaque critère doit éliminer au moins 3 distracteurs dans la grille (utile pédagogiquement)
   for (const c of criteres) {
     if (distracteurs.filter(n => c.test(n)).length < 3) return null;
   }
@@ -543,6 +591,50 @@ function tenterGeneration() {
 
   return { grille, criteres, solution };
 }
+
+// ============ TEST DE GÉNÉRATION (console) ============
+// Génère 20 puzzles et vérifie les invariants. Résultats visibles en console dev.
+(function testerGeneration() {
+  let tousOk = true;
+  for (let i = 1; i <= 20; i++) {
+    const p = genererPuzzle();
+
+    // 1. Exactement 1 survivant
+    const survie = p.grille.filter(n => !p.criteres.some(c => c.test(n)));
+    const ok1 = survie.length === 1 && survie[0] === p.solution;
+
+    // 2. Contribution exclusive ≥ 2 dans la grille pour chaque critère
+    const ok2 = p.criteres.every((ci, idx) => {
+      const autresTests = p.criteres.filter((_, j) => j !== idx).map(c => c.test);
+      return p.grille.filter(n => ci.test(n) && !autresTests.some(t => t(n))).length >= 2;
+    });
+
+    // 3. Aucun critère n'est un sous-ensemble d'un autre (sur la grille)
+    const ok3 = p.criteres.every((ci, idx) =>
+      p.criteres.every((cj, jdx) => {
+        if (idx === jdx) return true;
+        const eliminésI = p.grille.filter(n => ci.test(n));
+        const eliminésJ = p.grille.filter(n => cj.test(n));
+        // ci est sous-ensemble de cj si tout éliminé par ci l'est aussi par cj
+        const iSousJ = eliminésI.every(n => cj.test(n));
+        return !iSousJ;
+      })
+    );
+
+    const statut = (ok1 && ok2 && ok3) ? "✓" : "✗";
+    if (!(ok1 && ok2 && ok3)) tousOk = false;
+
+    console.log(
+      `Puzzle ${String(i).padStart(2)} ${statut}` +
+      ` | solution=${p.solution}` +
+      ` | survivants=${survie.length}` +
+      ` | contrib-excl=${ok2 ? "ok" : "FAIL"}` +
+      ` | sous-ens=${ok3 ? "ok" : "FAIL"}` +
+      ` | critères: ${p.criteres.map(c => c.texte).join(" / ")}`
+    );
+  }
+  console.log(tousOk ? "✓ Les 20 puzzles passent tous les invariants." : "✗ Certains puzzles ont échoué.");
+})();
 
 // ============ RENDU — CRITÈRES ============
 function renderCriteres(criteres) {
